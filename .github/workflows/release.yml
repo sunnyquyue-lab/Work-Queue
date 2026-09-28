@@ -1,0 +1,37 @@
+name: Build and publish Work Queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number, higher than the last release (for example 2.0.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install
+
+      - name: Set the version number
+        run: npm version ${{ inputs.version }} --no-git-tag-version --allow-same-version
+
+      - name: Build the installer and publish the release
+        run: >
+          npx electron-builder --win --publish always
+          --config.publish.provider=github
+          --config.publish.owner=${{ github.repository_owner }}
+          --config.publish.repo=${{ github.event.repository.name }}
+          --config.publish.releaseType=release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
