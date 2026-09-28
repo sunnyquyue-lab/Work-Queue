@@ -1,0 +1,42 @@
+{
+  "name": "work-queue",
+  "productName": "Work Queue",
+  "version": "2.0.0",
+  "description": "A personal task queue with lists, profiles, My Day, history and two looks.",
+  "main": "main.js",
+  "author": "Sunny",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "pack": "electron-builder --win --dir"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.workqueue.app",
+    "productName": "Work Queue",
+    "files": ["main.js", "preload.js", "index.html", "icon.png"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Work Queue",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Work-Queue-Setup-${version}.${ext}"
+    }
+  }
+}
