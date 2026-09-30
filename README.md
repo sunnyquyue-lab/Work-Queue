@@ -63,9 +63,9 @@ Desktop and Start menu, and opens Work Queue.
 
 **They happen on their own.** Work Queue checks for a new version when it starts and
 every 4 hours, downloads it in the background, then shows **Restart now**. If you
-choose Later, it installs the next time you quit. You can also use **Check now** at
-the bottom of the window or **Check for updates** in the tray menu. The version
-you're running is shown at the bottom of the window.
+choose Later, it installs the next time you quit. You can also use **Check now** in
+**Settings** (the ⚙ button, top right) or **Check for updates** in the tray menu.
+The version you're running is shown in Settings too.
 
 **Publishing a new version** (for example, when you get updated files):
 
@@ -83,8 +83,8 @@ Installed copies pick it up within a few hours, or right away with Check now.
 - Everything is saved automatically to `%AppData%\WorkQueue\work-queue-data.json`.
   Paste `%AppData%\WorkQueue` into File Explorer's address bar to open the folder.
 - **Daily backups:** each day, the app copies your data to the `backups` folder in
-  that location and keeps the last 14 days. To restore one, use **Restore a backup**
-  at the bottom of the app, or **Restore from backup** in the tray menu. Your current
+  that location and keeps the last 14 days. To restore one, open **Settings** →
+  **Restore a backup**, or use **Restore from backup** in the tray menu. Your current
   data is saved first, so a restore can be undone.
 - **Export backup** and **Import backup** save or load one profile as a file.
 - Updating or uninstalling never deletes your data.
@@ -123,6 +123,10 @@ Your data stays. To remove it too, delete the `%AppData%\WorkQueue` folder.
   everyone on each task.
 - **Looks and themes:** Fun or an Office-style Work look, each in Light, Dark or
   System.
+- **Settings:** the ⚙ button holds the look, theme, reminders, contexts, Start on
+  login, window modes, backups, updates and keyboard shortcuts.
+- **Archive:** finished one-off tasks move to an archive after 90 days. They still
+  count in History and show up in search, where Restore brings them back.
 - **Window modes:** Normal, Float on top, Widget (in front of or behind other
   windows), or Glue on the wallpaper.
 
@@ -135,7 +139,7 @@ Your data stays. To remove it too, delete the `%AppData%\WorkQueue` folder.
   mentions permissions, go to **Settings** → **Actions** → **General** → **Workflow
   permissions**, choose **Read and write permissions**, and save.
 - **No updates arrive.** Make sure the repository is Public and the new version
-  number is higher than the installed one (shown at the bottom of the window).
+  number is higher than the installed one (shown in Settings).
 - **"Automatic updates aren't set up for this copy."** That copy was built on a PC
   rather than by the workflow. Install the version from the Releases page instead.
 - **Ctrl+Shift+Space does nothing.** Another app already uses that shortcut.

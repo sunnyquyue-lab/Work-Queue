@@ -11,6 +11,8 @@ const fs = require('fs');
 // the folder from the app name, which differs between dev and packaged builds —
 // a classic cause of "my tasks changed depending on how I launched it".
 try { app.setPath('userData', path.join(app.getPath('appData'), 'WorkQueue')); } catch (e) {}
+// Must match build.appId in package.json (the installer registers the same ID)
+if (process.platform === 'win32') { try { app.setAppUserModelId('com.workqueue.app'); } catch (e) {} }
 
 // Durable data file in the OS user-data folder — survives everything the
 // browser can't guarantee. Written atomically (temp file + rename).
@@ -241,6 +243,18 @@ function createWindow(startHidden) {
   win = new BrowserWindow(opts);
   if (savedBounds) win.setBounds(savedBounds);
   win.loadFile('index.html');
+  // Never let the window leave the app (a dropped file or link would otherwise
+  // replace it). Web links go to the browser instead; nothing opens new windows.
+  const appUrl = () => win && !win.isDestroyed() ? win.webContents.getURL() : '';
+  win.webContents.on('will-navigate', (e, url) => {
+    if (url === appUrl()) return;
+    e.preventDefault();
+    if (/^(https?:|mailto:)/i.test(url)) shell.openExternal(url).catch(() => {});
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^(https?:|mailto:)/i.test(url)) shell.openExternal(url).catch(() => {});
+    return { action: 'deny' };
+  });
   const thisWin = win;
   win.once('ready-to-show', () => {
     if (win !== thisWin) return;
@@ -405,8 +419,30 @@ ipcMain.handle('open-link', async (_e, url) => {
   if (typeof url !== 'string' || !/^(https?:|mailto:)/i.test(url)) return false;
   try { await shell.openExternal(url); return true; } catch (e) { return false; }
 });
+// Programs and scripts run code; files on network paths come from elsewhere.
+// Those get a confirmation first. Documents and pictures open straight away.
+const RISKY_EXT = new Set(['.exe', '.com', '.bat', '.cmd', '.ps1', '.psm1', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh',
+  '.msi', '.msp', '.scr', '.pif', '.lnk', '.reg', '.hta', '.cpl', '.jar', '.appref-ms', '.url', '.application', '.gadget', '.inf']);
+function riskOf(p) {
+  if (/^\\\\/.test(p) || /^\/\//.test(p)) return 'network';
+  return RISKY_EXT.has(path.extname(p).toLowerCase()) ? 'program' : null;
+}
 ipcMain.handle('open-file', async (_e, p) => {
   if (typeof p !== 'string' || !p || !fs.existsSync(p)) return false;
+  const risk = riskOf(p);
+  if (risk) {
+    const parent = (win && win.isVisible() && mode !== 'desktop') ? win : null;
+    const opts = {
+      type: 'warning', buttons: ['Open', 'Cancel'], defaultId: 1, cancelId: 1, noLink: true,
+      title: 'Open this file?',
+      message: 'Open \u201C' + path.basename(p) + '\u201D?',
+      detail: risk === 'program'
+        ? 'This is a program or script, so opening it runs it. Only continue if you trust where it came from.'
+        : 'This file is on a network location. Only continue if you trust where it came from.'
+    };
+    const r = parent ? await dialog.showMessageBox(parent, opts) : await dialog.showMessageBox(opts);
+    if (r.response !== 0) return 'cancelled';
+  }
   try { return (await shell.openPath(p)) === ''; } catch (e) { return false; }
 });
 ipcMain.handle('pick-files', async () => {

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Work Queue</title>
 <script>/* apply the saved theme before first paint: no light flash */
 try { if (localStorage.getItem('wq-style') === 'work') document.documentElement.classList.add('work'); } catch (e) {}
@@ -30,8 +31,8 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
     --border: #E8DFE6;
     --border-soft: #F1EAEF;
     --text: #4A4048;
-    --text-dim: #877E86;
-    --text-faint: #B8AFB7;
+    --text-dim: #625861;
+    --text-faint: #756A74;
 
     --primary: #8FB3DE;       /* soft cornflower */
     --primary-deep: #6E97CE;
@@ -658,7 +659,7 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
     color-scheme: dark;
     --bg: #1F1B22; --surface: #2A2430; --surface-2: #332C39; --surface-3: #3D3544;
     --border: #4A4152; --border-soft: #3A3240;
-    --text: #F2ECF1; --text-dim: #C3B8C1; --text-faint: #8F8490;
+    --text: #F2ECF1; --text-dim: #C9BFC7; --text-faint: #A0969F;
     --primary-deep: #A9C6EC; --primary-ink: #1B2A3D;
     --red-strong: #F08BA3; --teal: #7FD1AE;
     --shadow-sm: 0 2px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.28);
@@ -710,6 +711,109 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
     cursor: pointer; flex-shrink: 0;
   }
   .toast-undo:hover { background: #fff; }
+
+  /* ---------- Compact layout (2.1) ---------- */
+  body { padding-top: 18px; }
+  .app-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .app-head .brand { flex: 1; min-width: 0; }
+  .app-head .eyebrow { font-size: 10px; margin-bottom: 2px; }
+  .app-head h1 { font-size: 30px; line-height: 1.05; }
+  .app-head .squiggle { width: 118px; height: 9px; margin: 1px 0 0; }
+  .head-right { display: flex; align-items: center; gap: 8px; }
+  .quick-layer { display: inline-flex; gap: 4px; }
+  .quick-layer[hidden] { display: none; }
+  .icon-btn {
+    width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+    border: 1.5px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--text-dim);
+    cursor: pointer; box-shadow: var(--shadow-sm); font-size: 16px; line-height: 1; transition: border-color .15s, color .15s;
+  }
+  .icon-btn:hover { border-color: var(--primary); color: var(--text); }
+  .icon-btn.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+  .icon-btn .ico { width: 18px; height: 18px; }
+  .profile-current { padding: 5px 8px 5px 6px; font-size: 13.5px; }
+  .lists-bar { margin-bottom: 10px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .toolbar .search-box { flex: 1 1 auto; min-width: 120px; }
+  .sort-select { width: auto; max-width: 150px; flex: 0 0 auto; }
+  .stats { margin: 0 0 8px; gap: 6px; }
+  .stat { padding: 3px 10px 3px 8px; font-size: 11.5px; box-shadow: none; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 12px; padding-bottom: 2px; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-chip { flex-shrink: 0; padding: 6px 13px; }
+  .add-panel { padding: 8px; gap: 0; margin-bottom: 16px; }
+  .add-row { display: flex; align-items: center; gap: 8px; }
+  .add-row .add-name { flex: 1; min-width: 0; font-size: 15px; padding: 10px 14px; }
+  .add-row .btn-primary { padding: 10px 18px; }
+  .add-more { display: none; flex-direction: column; gap: 12px; padding: 12px 6px 6px; }
+  .add-panel.open .add-more { display: flex; }
+  .add-hint { margin: 0; font-size: 12px; color: var(--text-faint); font-weight: 600; }
+  .task-main { padding-top: 11px; padding-bottom: 11px; }
+  .task-meta { margin-top: 5px; }
+  .queue { gap: 10px; }
+  .repeat-chip { white-space: nowrap; }
+  .archive-matches { margin: 16px 0 0; padding: 12px 14px; background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--r-md); }
+  .archive-matches[hidden] { display: none; }
+  /* Settings panel */
+  .settings-backdrop { position: fixed; inset: 0; background: rgba(30,20,30,0.28); z-index: 9400; }
+  .settings-backdrop[hidden] { display: none; }
+  .settings {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); z-index: 9500; overflow-y: auto;
+    background: var(--bg); border-left: 1.5px solid var(--border); box-shadow: -12px 0 30px rgba(0,0,0,0.12);
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(100%); transition: transform .2s ease;
+  }
+  .settings[hidden] { display: none; }
+  .settings.open { transform: none; }
+  .set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .set-head h2 { font-family: 'Fredoka', system-ui, sans-serif; font-size: 24px; margin: 0; }
+  .set-sec { padding: 14px 0; border-top: 1.5px dashed var(--border); display: flex; flex-direction: column; gap: 10px; }
+  .set-sec h3 { margin: 0; font-size: 13px; font-weight: 800; color: var(--text-dim); }
+  .set-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .set-note { margin: 0; font-size: 12.5px; color: var(--text-faint); font-weight: 600; }
+  .settings .look-switch { margin-left: 0; align-self: auto; }
+  .settings .theme-btn { margin-left: 0; align-self: auto; }
+  .settings .mode-btns { position: static; max-width: none; justify-content: flex-start; }
+  .settings .ctx-manager { margin: 0; box-shadow: none; }
+  .settings .data-tools { justify-content: flex-start; flex-wrap: wrap; margin: 0; }
+  .settings .shortcut-hint { text-align: left; margin: 0; line-height: 2; }
+  .settings .app-version { text-align: left; margin: 0; }
+  html.work .app-head h1 { font-size: 22px; }
+  html.work .app-head .eyebrow { font-size: 12px; }
+  html.work :is(.icon-btn) { border: 1px solid var(--border); border-radius: 4px; box-shadow: none; color: var(--text); width: 32px; height: 32px; }
+  html.work .icon-btn:hover { background: var(--surface-2); border-color: var(--text-faint); }
+  html.work .icon-btn .ico { width: 16px; height: 16px; }
+  html.work .settings { border-left-width: 1px; }
+  html.work .set-head h2 { font-size: 20px; font-weight: 600; }
+  html.work .set-sec { border-top: 1px solid var(--border-soft); }
+  html.work .set-sec h3 { font-weight: 600; }
+  html.work :is(.set-note, .add-hint) { font-weight: 400; }
+  html.work .add-panel { padding: 6px; }
+  html.work .task-main { padding-top: 9px; padding-bottom: 9px; }
+  html.work .archive-matches { border: 1px solid var(--border-soft); border-radius: 6px; }
+  @media (max-width: 560px) { .app-head h1 { font-size: 26px; } .app-head .eyebrow { display: none; } }
+
+  /* ---------- Read-only task summary ---------- */
+  .task-detail { display: flex; flex-direction: column; gap: 14px; }
+  .td-facts { display: grid; grid-template-columns: max-content 1fr; gap: 7px 18px; margin: 2px 0 0; font-size: 14px; }
+  .td-facts dt { color: var(--text-faint); font-weight: 700; font-size: 12.5px; padding-top: 1px; }
+  .td-facts dd { margin: 0; font-weight: 600; color: var(--text); }
+  .td-soft { color: var(--text-faint); font-weight: 600; font-size: 12.5px; }
+  .td-notes { white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.55; color: var(--text);
+    background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 13px; }
+  .td-head { font-weight: 800; font-size: 13px; color: var(--text-dim); margin-bottom: 7px; }
+  .task-detail .sub-row { cursor: pointer; }
+  .td-empty { margin: 0; font-size: 13.5px; color: var(--text-faint); font-weight: 600; }
+  .td-history { margin: 0; font-size: 12px; color: var(--text-faint); font-weight: 600; }
+  .td-actions, .expand-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; }
+  .edit-open, .edit-done { padding: 8px 18px; font-size: 13.5px; box-shadow: 0 3px 0 var(--primary-deep); display: inline-flex; align-items: center; gap: 6px; }
+  .task.editing .expand-inner { background: var(--surface-2); border-top-color: var(--primary); }
+  html.work .td-facts dt { font-weight: 400; color: var(--text-dim); }
+  html.work .td-facts dd { font-weight: 400; }
+  html.work .td-head { font-weight: 600; }
+  html.work .td-notes { border: 1px solid var(--border-soft); background: var(--surface); }
+  html.work :is(.td-empty, .td-history, .td-soft) { font-weight: 400; }
+  html.work :is(.edit-open, .edit-done) { box-shadow: none; padding: 5px 16px; }
+  html.work .task.editing .expand-inner { background: var(--surface-2); }
 
   /* ---------- My Day, select several, templates, links ---------- */
   .myday-tab .ico, .myday-tab .ico-e { margin-right: 2px; }
@@ -818,7 +922,7 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
   html.work {
     --bg: #F5F5F5; --surface: #FFFFFF; --surface-2: #F5F5F5; --surface-3: #EBEBEB;
     --border: #D1D1D1; --border-soft: #E0E0E0;
-    --text: #242424; --text-dim: #616161; --text-faint: #8A8A8A;
+    --text: #242424; --text-dim: #5C5C5C; --text-faint: #6B6B6B;
     --primary: #0F6CBD; --primary-deep: #0F6CBD; --primary-ink: #FFFFFF; --primary-hover: #115EA3; --primary-press: #0F548C;
     --select-bg: #EBF3FC; --select-ink: #0F548C;
     --red: #C50F1F; --red-strong: #C50F1F; --teal: #107C10;
@@ -1026,80 +1130,58 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="eyebrow">Today's lineup</div>
-    <h1>Work Queue</h1>
-    <svg class="squiggle" viewBox="0 0 208 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8 Q16 1 29 8 T55 8 T81 8 T107 8 T133 8 T159 8 T185 8 T205 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>
-    <div class="sub">Tag it, rank it, knock it out. Sort or group however you like — tap a task to fine-tune it.</div>
-  </header>
-
-  <div class="profile-bar">
-    <div>
-      <div class="profile-eyebrow">Profile</div>
-      <div class="profile-current" id="profileCurrent">
+  <header class="app-head">
+    <div class="brand">
+      <div class="eyebrow">Today's lineup</div>
+      <h1>Work Queue</h1>
+      <svg class="squiggle" viewBox="0 0 208 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8 Q16 1 29 8 T55 8 T81 8 T107 8 T133 8 T159 8 T185 8 T205 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="head-right" id="headRight">
+      <div class="profile-current" id="profileCurrent" title="Switch profile" role="button" tabindex="0">
         <span class="profile-avatar" id="profileAvatar"></span>
         <span id="profileName"></span>
         <svg class="profile-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
+      <button class="icon-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-controls="settingsPanel"></button>
     </div>
-    <div class="look-switch" role="group" aria-label="Look">
-      <button type="button" data-look="fun">Fun</button>
-      <button type="button" data-look="work">Work</button>
-    </div>
-    <button class="ghost-btn theme-btn" id="themeBtn" type="button"></button>
-  </div>
+  </header>
   <div class="profile-menu" id="profileMenu"></div>
 
   <div class="lists-bar" id="listsBar"></div>
 
   <div class="storage-warn" id="storageWarn"><span class="warn-ico">⚠️</span> <b>Heads up:</b> this browser is blocking saving for this page, so tasks will be lost when the window closes. Use <b>Export</b> at the bottom to back up your queue, and <b>Import</b> to restore it next time.</div>
 
-  <div class="stats" id="counts"></div>
-
-  <div class="controls">
+  <div class="toolbar">
     <div class="search-box">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
       <input type="search" id="searchInput" placeholder="Search tasks" aria-label="Search tasks" autocomplete="off">
       <button type="button" id="searchClear" title="Clear search" aria-label="Clear search">×</button>
     </div>
-    <div class="seg">
-      <span class="seg-label">Sort</span>
-      <select id="sortMode">
+    <select id="sortMode" class="sort-select" aria-label="Sort tasks" title="Sort tasks">
         <option value="urgency">By urgency</option>
         <option value="dueDate">By due date</option>
         <option value="dateAdded">By date added</option>
         <option value="alpha">Alphabetical</option>
         <option value="context">By context</option>
         <option value="manual">Manual (drag)</option>
-      </select>
-    </div>
-    <label class="toggle"><input type="checkbox" id="groupToggle"><span>Group by context</span></label>
-    <button class="ghost-btn" id="remindBtn" style="margin-left:auto;" title="Get a desktop notification when tasks are due or overdue">Reminders</button>
-    <input type="time" id="remindTime" class="remind-time" title="Daily reminder time for due and overdue tasks" aria-label="Daily reminder time" hidden>
-    <button class="ghost-btn" id="selectBtn" type="button" title="Select several tasks (or Ctrl-click / Shift-click a task)">Select</button>
-    <button class="ghost-btn" id="copyBtn" type="button" title="Copy the tasks on screen as a text checklist">Copy list</button>
-    <button class="ghost-btn" id="manageBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Contexts
-    </button>
+    </select>
+    <button class="icon-btn" id="selectBtn" type="button" title="Select several tasks (or Ctrl-click / Shift-click a task)" aria-label="Select several tasks"></button>
+    <button class="icon-btn" id="copyBtn" type="button" title="Copy the tasks on screen as a text checklist" aria-label="Copy list as text"></button>
   </div>
 
-  <div class="ctx-manager" id="ctxManager" hidden>
-    <h2>Manage contexts</h2>
-    <div class="ctx-manager-list" id="ctxManagerList"></div>
-    <div class="ctx-add-row">
-      <input type="text" id="newCtxInput" placeholder="New context name" maxlength="24">
-      <button id="newCtxBtn">Add</button>
-    </div>
-  </div>
-
+  <div class="stats" id="counts"></div>
   <div class="filters" id="filters"></div>
 
-  <div class="add-panel">
-    <input type="text" class="add-name" id="taskName" placeholder="What needs doing?" maxlength="90">
-    <textarea class="add-desc" id="taskDesc" placeholder="Add details (optional)"></textarea>
-    <div class="add-inline">
-      <select id="taskInterval">
+  <div class="add-panel" id="addPanel">
+    <div class="add-row">
+      <input type="text" class="add-name" id="taskName" placeholder="Add a task" maxlength="90" aria-label="New task name">
+      <button class="icon-btn" id="templateBtn" type="button" data-pop="1" title="Add from a template" aria-label="Add from a template"></button>
+      <button class="btn-primary" id="addBtn">Add</button>
+    </div>
+    <div class="add-more">
+      <textarea class="add-desc" id="taskDesc" placeholder="Add details (optional)"></textarea>
+      <div class="add-inline">
+        <select id="taskInterval">
         <option value="once" selected>One-off (no repeat)</option>
         <option value="1">Repeats daily</option>
         <option value="2">Repeats every 2 days</option>
@@ -1109,18 +1191,19 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
         <option value="30">Repeats monthly (same date)</option>
         <option value="weekdays">Repeats on certain days…</option>
       </select>
-      <input type="date" id="dueDate" title="Due date (optional)">
+        <input type="date" id="dueDate" title="Due date (optional)">
+      </div>
+      <div class="weekday-row" id="addWeekdays" hidden role="group" aria-label="Repeat on these days"></div>
+      <div>
+        <span class="field-label">Urgency</span>
+        <div class="picker-row" id="addUrgency"></div>
+      </div>
+      <div>
+        <span class="field-label">Contexts</span>
+        <div class="picker-row" id="addContexts"></div>
+      </div>
+      <p class="add-hint">Press Enter to add. Everything below the name is optional.</p>
     </div>
-    <div class="weekday-row" id="addWeekdays" hidden role="group" aria-label="Repeat on these days"></div>
-    <div>
-      <span class="field-label">Urgency</span>
-      <div class="picker-row" id="addUrgency"></div>
-    </div>
-    <div>
-      <span class="field-label">Contexts</span>
-      <div class="picker-row" id="addContexts"></div>
-    </div>
-    <div class="add-actions"><button class="ghost-btn" id="templateBtn" type="button" data-pop="1">From template</button><button class="btn-primary" id="addBtn">Add task</button></div>
   </div>
 
   <div class="myday-suggest" id="mydaySuggest" hidden></div>
@@ -1142,15 +1225,64 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
     <div id="historyBody"></div>
   </div>
 
+  <div id="archiveMatches" class="archive-matches" hidden></div>
+</div>
+
+
+<div class="settings-backdrop" id="settingsBackdrop" hidden></div>
+<aside class="settings" id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+  <div class="set-head"><h2 id="settingsTitle">Settings</h2><button class="icon-btn" id="settingsClose" type="button" aria-label="Close settings" title="Close (Esc)">×</button></div>
+  <section class="set-sec">
+    <h3>Look</h3>
+    <div class="set-row">
+      <div class="look-switch" role="group" aria-label="Look">
+        <button type="button" data-look="fun">Fun</button>
+        <button type="button" data-look="work">Work</button>
+      </div>
+      <button class="ghost-btn theme-btn" id="themeBtn" type="button"></button>
+    </div>
+  </section>
+  <section class="set-sec">
+    <h3>View</h3>
+    <label class="toggle"><input type="checkbox" id="groupToggle"><span>Group tasks by context</span></label>
+  </section>
+  <section class="set-sec">
+    <h3>Reminders</h3>
+    <div class="set-row">
+      <button class="ghost-btn" id="remindBtn" type="button" title="Get a desktop notification when tasks are due or overdue">Reminders</button>
+      <input type="time" id="remindTime" class="remind-time" title="Daily reminder time for due and overdue tasks" aria-label="Daily reminder time" hidden>
+    </div>
+    <p class="set-note">A notification for anything due or overdue, at this time each day, for every profile.</p>
+  </section>
+  <section class="set-sec" id="setApp" hidden>
+    <h3>Desktop app</h3>
+  </section>
+  <section class="set-sec">
+    <h3>Contexts</h3>
+    <button class="ghost-btn" id="manageBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Edit contexts</button>
+    <div class="ctx-manager" id="ctxManager" hidden>
+    <h2>Manage contexts</h2>
+    <div class="ctx-manager-list" id="ctxManagerList"></div>
+    <div class="ctx-add-row">
+      <input type="text" id="newCtxInput" placeholder="New context name" maxlength="24">
+      <button id="newCtxBtn">Add</button>
+    </div>
+  </div>
+  </section>
+  <section class="set-sec">
+    <h3>Backups</h3>
   <div class="data-tools">
     <button class="data-btn" id="exportBtn" type="button" title="Download all tasks, lists, and settings as a JSON file">⬇ Export backup</button>
     <button class="data-btn" id="importBtn" type="button" title="Restore from an exported JSON file">⬆ Import backup</button>
     <button class="data-btn" id="linkBtn" type="button" title="Mirror your tasks to a real file so they survive browser cleanup (Chrome/Edge)">🔗 Link backup file</button>
     <input type="file" id="importFile" accept=".json,application/json" style="display:none">
   </div>
-  <p class="shortcut-hint" id="shortcutHint">Shortcuts: <kbd>N</kbd> new task, <kbd>/</kbd> search, <kbd>Esc</kbd> close, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
-</div>
-
+  </section>
+  <section class="set-sec">
+    <h3>Keyboard</h3>
+    <p class="shortcut-hint" id="shortcutHint">Shortcuts: <kbd>N</kbd> new task, <kbd>/</kbd> search, <kbd>Esc</kbd> close, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
+  </section>
+</aside>
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-msg" id="toastMsg"></span>
   <button class="toast-undo" id="toastUndo" type="button">Undo</button>
@@ -1164,7 +1296,7 @@ const STYLE_KEY = 'work-queue-style';
 const ICON_EMOJI = { bell: '\u{1F514}', people: '\u{1F465}', streak: '\u{1F525}', download: '\u2B07', upload: '\u2B06',
   link: '\u{1F517}', folder: '\u{1F5C2}\uFE0F', restore: '\u21BA', pin: '\u{1F4CC}', widget: '\u{1FA9F}', glue: '\u{1F5BC}\uFE0F',
   up: '\u2B06\uFE0F', down: '\u2B07\uFE0F', system: '\u{1F5A5}\uFE0F', sun: '\u2600\uFE0F', moon: '\u{1F319}', done: '\u{1F389}',
-  warning: '\u26A0\uFE0F', edit: '\u270E', trash: '\u{1F5D1}', check: '\u2713', sparkle: '\u2728', briefcase: '\u{1F4BC}', history: '', copy: '\u{1F4CB}', select: '\u2611\uFE0F', file: '\u{1F4CE}', template: '\u{1F9E9}', myday: '\u2600\uFE0F' };
+  warning: '\u26A0\uFE0F', edit: '\u270E', trash: '\u{1F5D1}', check: '\u2713', sparkle: '\u2728', briefcase: '\u{1F4BC}', history: '', copy: '\u{1F4CB}', select: '\u2611\uFE0F', gear: '\u2699\uFE0F', file: '\u{1F4CE}', template: '\u{1F9E9}', myday: '\u2600\uFE0F' };
 const ICON_PATHS = {
   bell: '<path d="M10 3a4.5 4.5 0 0 0-4.5 4.5v2.8L4 13h12l-1.5-2.7V7.5A4.5 4.5 0 0 0 10 3z"/><path d="M8.3 15.5a1.8 1.8 0 0 0 3.4 0"/>',
   people: '<circle cx="7.5" cy="7" r="2.5"/><path d="M3 15.5c.4-2.4 2.2-4 4.5-4s4.1 1.6 4.5 4"/><circle cx="13.8" cy="7.8" r="2"/><path d="M13.6 11.6c1.8.1 3.1 1.4 3.4 3.4"/>',
@@ -1190,6 +1322,7 @@ const ICON_PATHS = {
   sparkle: '<path d="M10 3.5 11.4 8.6 16.5 10 11.4 11.4 10 16.5 8.6 11.4 3.5 10 8.6 8.6z"/>',
   briefcase: '<rect x="3" y="6.5" width="14" height="9.5" rx="1.5"/><path d="M7.5 6.5V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5M3 10.5h14"/>',
   history: '<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2"/>',
+  gear: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.8v2M10 15.2v2M2.8 10h2M15.2 10h2M4.9 4.9l1.4 1.4M13.7 13.7l1.4 1.4M4.9 15.1l1.4-1.4M13.7 6.3l1.4-1.4"/><circle cx="10" cy="10" r="5.2"/>',
   copy: '<rect x="7" y="6.5" width="9" height="10.5" rx="1.5"/><path d="M13 6.5V4.5A1.5 1.5 0 0 0 11.5 3h-6A1.5 1.5 0 0 0 4 4.5v8A1.5 1.5 0 0 0 5.5 14H7"/>',
   select: '<rect x="3.5" y="3.5" width="13" height="13" rx="2"/><path d="m6.8 10.2 2.2 2.2 4.2-4.6"/>',
   file: '<path d="M11.5 3H6a1.5 1.5 0 0 0-1.5 1.5v11A1.5 1.5 0 0 0 6 17h8a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M11.5 3v4h4"/>',
@@ -1206,9 +1339,10 @@ let stylePref = isWork() ? 'work' : 'fun';
 function applyIcons() {
   const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   set('exportBtn', ico('download') + ' Export backup');
-  set('copyBtn', ico('copy') + ' Copy list');
-  set('selectBtn', ico('select') + ' Select');
-  set('templateBtn', ico('template') + ' From template');
+  set('copyBtn', ico('copy'));
+  set('selectBtn', ico('select'));
+  set('templateBtn', ico('template'));
+  set('settingsBtn', ico('gear'));
   set('importBtn', ico('upload') + ' Import backup');
   const w = document.getElementById('storageWarn');
   if (w) { const b = w.querySelector('.warn-ico'); if (b) b.innerHTML = ico('warning'); }
@@ -1332,6 +1466,7 @@ function mirrorLinked() {} // replaced once data tools initialise
 let managerOpen = false;
 
 const expandedIds = new Set();
+const editingIds = new Set(); // open tasks showing the editor instead of the read-only summary
 const newTaskContexts = new Set();
 let newTaskUrgency = 3;
 let pendingDeleteCtx = null;
@@ -1577,7 +1712,7 @@ async function deleteProfile(id) {
   if (profiles.length <= 1) return; // always keep at least one
   profiles = profiles.filter(p => p.id !== id);
   // wipe that profile's namespaced data
-  for (const base of [TASKS_KEY, LISTS_KEY, CONTEXTS_KEY, SETTINGS_KEY]) {
+  for (const base of [TASKS_KEY, LISTS_KEY, CONTEXTS_KEY, SETTINGS_KEY, 'templates', 'archive']) {
     try { await store.set('wq:' + id + ':' + base, ''); } catch (e) {}
   }
   await saveProfiles();
@@ -1590,8 +1725,8 @@ async function loadAll() {
   // reset per-profile state so switching profiles never bleeds across
   tasks = []; lists = []; contextRegistry = [];
   sortMode = 'urgency'; groupByContext = false; doneCollapsed = false; historyCollapsed = true; historyShown = 7;
-  selectedIds.clear(); selectMode = false; templates = []; document.body.classList.remove('selecting');
-  activeListId = null; notifyEnabled = false; expandedIds.clear();
+  selectedIds.clear(); selectMode = false; templates = []; archive = []; document.body.classList.remove('selecting');
+  activeListId = null; notifyEnabled = false; expandedIds.clear(); editingIds.clear();
 
   // One-time migration from the pre-profiles layout (un-namespaced keys).
   // If this profile has nothing stored yet but legacy data exists, adopt it.
@@ -1679,6 +1814,8 @@ async function loadAll() {
   { const m = mergeSharedIntoProfile(); if (m.storeChanged) saveShared(); if (m.changed) { try { await store.set(pkey(TASKS_KEY), JSON.stringify(tasks)); } catch (e) {} } }
 
   try { const r = await store.get(pkey(TEMPLATES_KEY)); templates = r ? JSON.parse(r) : []; if (!Array.isArray(templates)) templates = []; } catch (e) { templates = []; }
+  try { const r = await store.get(pkey(ARCHIVE_KEY)); archive = r ? JSON.parse(r) : []; if (!Array.isArray(archive)) archive = []; } catch (e) { archive = []; }
+  archiveOld();
 
   // Reminders are app-wide now that they cover every profile
   if (reminderPrefs) notifyEnabled = !!reminderPrefs.enabled;
@@ -2075,6 +2212,73 @@ function undoComplete(id) {
   }
   saveTasks(); render();
 }
+/* ---------- read-only task summary ----------
+   Shows only what the task actually has. Ticking sub-tasks and opening links
+   work here; changing anything happens after pressing Edit. */
+function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function repeatSentence(t) {
+  if (isWeekdayRepeat(t)) {
+    const l = weekdayLabel(t.weekdays);
+    return l === 'every day' ? 'Every day' : l === 'weekdays' ? 'Every weekday' : l === 'weekends' ? 'Every weekend' : 'Every ' + l;
+  }
+  if (isMonthly(t)) return 'Monthly, on the ' + ordinal(anchorDayOf(t));
+  const n = t.intervalDays || 1;
+  return n === 1 ? 'Every day' : n === 7 ? 'Every week' : n === 14 ? 'Every 2 weeks' : 'Every ' + n + ' days';
+}
+function longDate(iso) {
+  const d = new Date(iso + 'T00:00:00'), opts = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
+function relDays(iso) {
+  const n = daysBetween(todayStr(), iso);
+  return n < -1 ? Math.abs(n) + ' days overdue' : n === -1 ? '1 day overdue' : n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days';
+}
+function taskDetailHTML(t) {
+  const facts = [];
+  const due = nextDue(t);
+  if (t.type === 'once') {
+    if (t.dueDate) facts.push(['Due', `${escapeHTML(longDate(t.dueDate))} <span class="td-soft">(${relDays(t.dueDate)})</span>`]);
+  } else {
+    facts.push(['Repeats', escapeHTML(repeatSentence(t))]);
+    if (due) facts.push(['Next due', `${escapeHTML(longDate(due))} <span class="td-soft">(${relDays(due)})</span>`]);
+  }
+  if (t.remindAt) facts.push(['Reminder', escapeHTML(fmtHM(t.remindAt))]);
+  const inLists = lists.filter(l => l.id !== MAIN_LIST_ID && (t.listIds || []).includes(l.id)).map(l => escapeHTML(l.name));
+  if (inLists.length) facts.push(['Lists', inLists.join(', ')]);
+  if (inMyDay(t)) facts.push(['Today', 'In My Day']);
+  if (t.shared) facts.push(['Sharing', 'Shared with every profile']);
+
+  const subs = t.subtasks || [];
+  const subDone = subs.filter(s => s.done).length;
+  const links = t.links || [];
+  const log = t.doneLog || [];
+  const hist = [];
+  if (t.createdAt) hist.push('Added ' + longDate(t.createdAt));
+  if (log.length) hist.push('done ' + (log.length === 1 ? 'once' : log.length + ' times'));
+  const last = log.length ? log[log.length - 1] : null;
+  if (last && t.type !== 'once') hist.push('last on ' + longDate(last.d) + (t.shared && last.by ? ' by ' + escapeHTML(last.by) : ''));
+  const streak = taskStreak(t);
+  if (streak >= 2) hist.push(streak + ' on time in a row');
+
+  const nothing = !facts.length && !(t.description || '').trim() && !subs.length && !links.length;
+  return `<div class="task-detail">
+      ${facts.length ? `<dl class="td-facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>` : ''}
+      ${(t.description || '').trim() ? `<div class="td-notes">${escapeHTML(t.description.trim())}</div>` : ''}
+      ${subs.length ? `<div class="td-block"><div class="td-head">Sub-tasks <span class="td-soft">${subDone} of ${subs.length} done</span></div>
+        <div class="sub-list">${subs.map(s => `<label class="sub-row ${s.done ? 'done' : ''}"><input type="checkbox" class="sub-check" data-sub-toggle="${s.id}" ${s.done ? 'checked' : ''}><span class="sub-name">${escapeHTML(s.name)}</span></label>`).join('')}</div></div>` : ''}
+      ${links.length ? `<div class="td-block"><div class="td-head">Links and files</div>
+        <div class="sub-list">${links.map(l => `<div class="sub-row link-row"><button type="button" class="link-open" data-open-link="${l.id}" title="${escapeHTML(l.url)}">${ico(l.kind === 'file' ? 'file' : 'link')} <span>${escapeHTML(linkTitle(l))}</span></button></div>`).join('')}</div></div>` : ''}
+      ${nothing ? `<p class="td-empty">No details yet. Use Edit to add notes, a due date, sub-tasks or links.</p>` : ''}
+      ${hist.length ? `<p class="td-history">${hist.join(' \u00B7 ')}</p>` : ''}
+      <div class="expand-actions td-actions">
+        <button type="button" class="due-clear" data-save-template="1">${ico('template')} Save as template</button>
+        <button class="del-task-btn" data-del-task="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete</button>
+        <button type="button" class="btn-primary edit-open" data-edit-task="1">${ico('edit')} Edit</button>
+      </div>
+    </div>`;
+}
+
 /* ---------- changing a task's repeat ---------- */
 function repeatValue(t) {
   if (t.type === 'once') return 'once';
@@ -2135,6 +2339,58 @@ function dayStreaks(list) {
   let best = 0, run = 0, prev = null;
   [...set].sort().forEach(x => { run = (prev && addDays(prev, 1) === x) ? run + 1 : 1; best = Math.max(best, run); prev = x; });
   return { current, best };
+}
+
+/* ---------- noticing a new day ----------
+   If the app stays open (or in the tray) past midnight, redraw so "today",
+   My Day, the counters and repeating tasks all move to the new day. */
+let shownDay = todayStr();
+function checkDayChange() {
+  const d = todayStr();
+  if (d === shownDay) return false;
+  shownDay = d;
+  if (loaded) { archiveOld(); applyIcons(); render(); checkDueReminders(); }
+  return true;
+}
+setInterval(checkDayChange, 30 * 1000);
+window.addEventListener('focus', checkDayChange);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDayChange(); });
+
+/* ---------- archive: finished one-off tasks older than 90 days ----------
+   Keeps the everyday list small and fast. Archived tasks still count in
+   History and show up in search, and can be restored. */
+const ARCHIVE_KEY = 'archive';
+const ARCHIVE_AFTER_DAYS = 90;
+let archive = [];
+async function saveArchive() { try { await store.set(pkey(ARCHIVE_KEY), JSON.stringify(archive)); } catch (e) {} }
+function archiveOld() {
+  const cutoff = addDays(todayStr(), -ARCHIVE_AFTER_DAYS);
+  const old = tasks.filter(t => t.type === 'once' && t.completedAt && t.completedAt < cutoff && !t.shared);
+  if (!old.length) return 0;
+  const ids = new Set(old.map(t => t.id));
+  archive = archive.concat(old.map(t => { const c = Object.assign({}, t); delete c.undoState; return c; }));
+  tasks = tasks.filter(t => !ids.has(t.id));
+  saveArchive(); saveTasks();
+  return old.length;
+}
+function archiveFor(listId) {
+  if (listId === MYDAY_ID) return [];
+  if (listId === MAIN_LIST_ID) return archive;
+  return archive.filter(t => (t.listIds || []).includes(listId));
+}
+function renderArchiveMatches() {
+  const box = document.getElementById('archiveMatches');
+  if (!box) return;
+  const terms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) { box.hidden = true; box.innerHTML = ''; return; }
+  const text = t => [t.name, t.description, ...(t.contexts || []), ...(t.subtasks || []).map(s => s.name)].join(' ').toLowerCase();
+  const hits = archiveFor(activeListId).filter(t => terms.every(w => text(t).includes(w)))
+    .sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || '')).slice(0, 25);
+  if (!hits.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<div class="sg-head"><span>From the archive (${hits.length})</span></div>` + hits.map(t =>
+    `<div class="sg-row"><span class="hist-dot" style="background:${urgColor(t.urgency)}"></span><span class="sg-name">${escapeHTML(t.name)}</span><span class="sg-why">done ${escapeHTML(longDate(t.completedAt))}</span><button type="button" class="due-clear" data-unarchive="${t.id}" data-day="${t.completedAt}">Restore</button></div>`).join('');
+  box.querySelectorAll('[data-unarchive]').forEach(b => b.addEventListener('click', () => restoreTask(b.dataset.unarchive, b.dataset.day)));
 }
 
 /* ---------- My Day ---------- */
@@ -2348,7 +2604,7 @@ function addFromTemplate(tpl) {
   t.subtasks = (tpl.subtasks || []).map(n => ({ id: rid('sub_'), name: n, done: false }));
   t.links = (tpl.links || []).map(l => ({ id: rid('lnk_'), url: l.url, title: l.title, kind: l.kind }));
   if (tpl.remindAt) t.remindAt = tpl.remindAt;
-  expandedIds.add(t.id);
+  expandedIds.add(t.id); editingIds.add(t.id);
   saveTasks(); render();
   showToast('Added \u201C' + t.name + '\u201D from a template', () => { removeTasks([t.id]); });
 }
@@ -2390,6 +2646,7 @@ function addLinkToTask(t, raw) {
 async function openTaskLink(l) {
   if (isDesktop()) {
     const ok = l.kind === 'file' ? await window.workqueue.openFile(l.url) : await window.workqueue.openLink(l.url);
+    if (ok === 'cancelled') return;
     if (!ok) showToast(l.kind === 'file' ? 'That file isn\u2019t there anymore' : 'Couldn\u2019t open that link');
     return;
   }
@@ -2746,6 +3003,7 @@ function render() {
 
   if (!loaded) { root.innerHTML = '<div class="loading">Loading queue…</div>'; return; }
   [...expandedIds].forEach(id => { if (!tasks.some(t => t.id === id)) expandedIds.delete(id); });
+  [...editingIds].forEach(id => { if (!expandedIds.has(id)) editingIds.delete(id); });
 
   renderLists();
   const listTasks = activeListId === MAIN_LIST_ID ? tasks
@@ -2809,7 +3067,8 @@ function render() {
 
   renderQueue(active.filter(matches), root);
   renderDone(done.filter(matches), doneSection);
-  renderHistory(listTasks);
+  renderHistory(listTasks.concat(archiveFor(activeListId)));
+  renderArchiveMatches();
 }
 
 function renderQueue(active, root) {
@@ -2926,8 +3185,13 @@ function renderHistory(list) {
 }
 // Put a finished one-off task back in the queue (from History)
 function restoreTask(id, day) {
-  const t = tasks.find(x => x.id === id);
-  if (!t) return;
+  let t = tasks.find(x => x.id === id);
+  if (!t) {
+    const k = archive.findIndex(x => x.id === id);
+    if (k < 0) return;
+    t = archive.splice(k, 1)[0];
+    tasks.push(t); saveArchive();
+  }
   const prevLog = (t.doneLog || []).slice();
   const prevDone = t.completedAt;
   t.completedAt = null;
@@ -2943,7 +3207,7 @@ function renderDone(done, section) {
   const list = document.getElementById('doneList');
   const label = document.getElementById('doneLabel');
   const head = document.getElementById('doneHead');
-  if (done.length === 0) { section.style.display = 'none'; return; }
+  if (done.length === 0) { section.style.display = 'none'; list.innerHTML = ''; return; }
   section.style.display = '';
   label.textContent = `Done today (${done.length})`;
   head.classList.toggle('collapsed', doneCollapsed);
@@ -2958,14 +3222,16 @@ function renderDone(done, section) {
 }
 
 function taskHTML(t) {
-  let pill, statusText;
-  if (t.status === 'overdue') { pill = 'OVERDUE'; statusText = `${Math.abs(t.diff)}d overdue`; }
-  else if (t.status === 'today') { pill = 'DUE TODAY'; statusText = 'due today'; }
-  else if (t.status === 'anytime') { pill = 'ANYTIME'; statusText = 'no due date'; }
-  else { pill = 'ON TRACK'; statusText = `in ${t.diff}d`; }
+  // one badge carries the timing, so each card fits on two lines
+  let pill;
+  if (t.status === 'overdue') pill = `${Math.abs(t.diff)}d overdue`;
+  else if (t.status === 'today') pill = 'Due today';
+  else if (t.status === 'anytime') pill = '';
+  else pill = t.diff === 1 ? 'Tomorrow' : `In ${t.diff}d`;
 
   const um = urgencyMeta(t.urgency);
   const expanded = expandedIds.has(t.id);
+  const editing = expanded && editingIds.has(t.id);
   const ctxChips = t.contexts.map(c => `<span class="mini-chip"><span class="mc-dot" style="background:${contextColor(c)}"></span>@${escapeHTML(c)}</span>`).join('');
   const editCtx = contextRegistry.map(c => {
     const on = t.contexts.includes(c);
@@ -2993,7 +3259,7 @@ function taskHTML(t) {
       </div>`).join('');
 
   return `
-  <div class="task ${expanded?'expanded':''} ${selectedIds.has(t.id) ? 'selected' : ''}" data-id="${t.id}" style="--spine:${um.color}">
+  <div class="task ${expanded?'expanded':''} ${selectedIds.has(t.id) ? 'selected' : ''} ${editing ? 'editing' : ''}" data-mode="${editing ? 'edit' : 'view'}" data-id="${t.id}" style="--spine:${um.color}">
     <div class="task-main">
       <span class="drag-handle" title="Drag to reorder" aria-hidden="true"><svg viewBox="0 0 8 14" fill="currentColor"><circle cx="1.5" cy="2" r="1.2"/><circle cx="6.5" cy="2" r="1.2"/><circle cx="1.5" cy="7" r="1.2"/><circle cx="6.5" cy="7" r="1.2"/><circle cx="1.5" cy="12" r="1.2"/><circle cx="6.5" cy="12" r="1.2"/></svg></span>
       <button class="check-btn" title="Mark done" aria-label="Mark ${escapeHTML(t.name)} done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></button>
@@ -3009,16 +3275,17 @@ function taskHTML(t) {
           ${t.shared ? `<span class="mini-chip shared-chip" title="Shared with every profile">${ico('people')} Shared</span>` : ''}
           ${(t.links || []).length ? `<button type="button" class="mini-chip link-chip" data-links-menu="1" data-pop="1" title="Open a link or file">${ico((t.links.length === 1 && t.links[0].kind === 'file') ? 'file' : 'link')} ${t.links.length}</button>` : ''}
           ${ctxChips}
-          <span class="meta-text">${intervalLabel(t)} · ${statusText}</span>
+          ${t.type !== 'once' ? `<span class="mini-chip repeat-chip" title="Repeats ${escapeHTML(intervalLabel(t))}">\u21BB ${escapeHTML(intervalLabel(t))}</span>` : ''}
         </div>
       </div>
       ${(t.status === 'overdue' || t.status === 'today') ? `<button type="button" class="snooze-btn" data-snooze="1" title="Snooze to tomorrow">+1 day</button>` : ''}
-      <span class="status-pill ${t.status}">${pill}</span>
+      ${pill ? `<span class="status-pill ${t.status}" title="${t.status === 'overdue' ? 'Overdue' : t.status === 'today' ? 'Due today' : 'On track'}">${pill}</span>` : ''}
       <button type="button" class="myday-btn ${inMyDay(t) ? 'on' : ''}" data-myday="1" title="${inMyDay(t) ? 'Remove from My Day' : 'Add to My Day'}" aria-pressed="${inMyDay(t)}">${ico('myday')}</button>
       ${profiles.length > 1 ? `<button type="button" class="share-btn" data-share-menu="1" title="Send or share" aria-label="Send or share ${escapeHTML(t.name)}" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></button>` : ''}
-      <button class="expand-btn" title="Edit" aria-label="Edit ${escapeHTML(t.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <button class="expand-btn" title="Details" aria-label="Show details for ${escapeHTML(t.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
     </div>
     <div class="expand-wrap"><div class="expand-outer"><div class="expand-inner">
+${editing ? `
       <div><span class="field-label">Task</span><input class="edit-name" data-edit="name" value="${escapeHTML(t.name)}" maxlength="90"></div>
       <div><span class="field-label">Due date${t.type === 'once' ? '' : ' (optional — overrides the repeat schedule for the next one)'}</span>
         <div class="due-row">
@@ -3074,7 +3341,8 @@ function taskHTML(t) {
         </div>
         <span class="due-hint" data-send-hint>Copy keeps it here; Move removes it from this profile. Sharing puts one task in every profile.</span>
       </div>`) : ''}
-      <div class="expand-actions"><button type="button" class="due-clear" data-save-template="1">${ico('template')} Save as template</button><button class="del-task-btn" data-del-task="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete task</button></div>
+      <div class="expand-actions"><button type="button" class="due-clear" data-save-template="1">${ico('template')} Save as template</button><button class="del-task-btn" data-del-task="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete task</button><button type="button" class="btn-primary edit-done" data-done-edit="1">Done</button></div>
+      ` : taskDetailHTML(t)}
     </div></div></div>
   </div>`;
 }
@@ -3084,8 +3352,25 @@ function wireTask(card) {
   const t = tasks.find(t => t.id === id);
   card.querySelector('.check-btn').addEventListener('click', () => completeTask(id));
   card.querySelector('.expand-btn').addEventListener('click', () => {
-    if (expandedIds.has(id)) { expandedIds.delete(id); card.classList.remove('expanded'); }
+    if (expandedIds.has(id)) { expandedIds.delete(id); editingIds.delete(id); card.classList.remove('expanded'); }
+    else if (card.dataset.mode === 'edit') { expandedIds.add(id); render(); } // closed mid-edit: reopen on the summary
     else { expandedIds.add(id); card.classList.add('expanded'); }
+  });
+  const startEdit = () => {
+    expandedIds.add(id); editingIds.add(id); render();
+    const n = document.querySelector(`.task[data-id="${id}"] [data-edit="name"]`);
+    if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+  };
+  const editBtn = card.querySelector('[data-edit-task]');
+  if (editBtn) editBtn.addEventListener('click', startEdit);
+  const nameEl = card.querySelector('.task-name');
+  if (nameEl) nameEl.addEventListener('dblclick', e => { if (!selectMode) { e.preventDefault(); startEdit(); } });
+  const doneBtn = card.querySelector('[data-done-edit]');
+  if (doneBtn) doneBtn.addEventListener('click', () => {
+    const n = card.querySelector('[data-edit="name"]'), d = card.querySelector('[data-edit="desc"]');
+    if (t && n) t.name = n.value.trim() || 'Untitled task';
+    if (t && d) t.description = d.value;
+    editingIds.delete(id); saveTasks(); render();
   });
 
   const nameInput = card.querySelector('[data-edit="name"]');
@@ -3379,7 +3664,10 @@ document.getElementById('addBtn').addEventListener('click', () => {
   renderAddContexts(); renderAddUrgency();
   nameInput.focus();
 });
-document.getElementById('taskName').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('addBtn').click(); });
+document.getElementById('taskName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('addBtn').click();
+  else if (e.key === 'Escape' && !e.target.value.trim()) { e.target.blur(); document.getElementById('addPanel').classList.remove('open'); }
+});
 
 /* ---------- data tools: export / import + storage warning ---------- */
 function buildBackup() {
@@ -3387,7 +3675,7 @@ function buildBackup() {
   return {
     app: 'work-queue', version: 2, exportedAt: new Date().toISOString(),
     profile: cur ? cur.name : null,
-    tasks, lists, contexts: contextRegistry, templates,
+    tasks, lists, contexts: contextRegistry, templates, archive,
     settings: { sortMode, groupByContext, doneCollapsed, activeListId, notifyEnabled }
   };
 }
@@ -3423,6 +3711,7 @@ function applyBackup(p) {
   if (!p || p.app !== 'work-queue' || !Array.isArray(p.tasks)) throw new Error('not a Work Queue backup');
   tasks = p.tasks;
   if (Array.isArray(p.templates)) { templates = p.templates; saveTemplates(); }
+  if (Array.isArray(p.archive)) { archive = p.archive; saveArchive(); }
   lists = Array.isArray(p.lists) && p.lists.length ? p.lists : [{ id: 'list_main', name: 'Main' }];
   contextRegistry = Array.isArray(p.contexts) ? p.contexts : contextRegistry;
   const s = p.settings || {};
@@ -3765,6 +4054,38 @@ document.querySelectorAll('[data-look]').forEach(b => b.addEventListener('click'
 applyTheme();
 applyIcons();
 
+/* ---------- drops outside a task do nothing (instead of opening the file) ---------- */
+document.addEventListener('dragover', e => { if (e.dataTransfer && [...(e.dataTransfer.types || [])].some(x => x === 'Files' || x === 'text/uri-list')) e.preventDefault(); });
+document.addEventListener('drop', e => { if (!e.defaultPrevented) e.preventDefault(); });
+
+/* ---------- Settings panel ---------- */
+function settingsOpen() { return !document.getElementById('settingsPanel').hidden; }
+function openSettings() {
+  const panel = document.getElementById('settingsPanel');
+  panel.hidden = false; document.getElementById('settingsBackdrop').hidden = false;
+  requestAnimationFrame(() => panel.classList.add('open'));
+  document.getElementById('settingsClose').focus();
+}
+function closeSettings() {
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.remove('open'); document.getElementById('settingsBackdrop').hidden = true;
+  setTimeout(() => { if (!panel.classList.contains('open')) panel.hidden = true; }, 200);
+  document.getElementById('settingsBtn').focus();
+}
+document.getElementById('settingsBtn').addEventListener('click', () => settingsOpen() ? closeSettings() : openSettings());
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+document.getElementById('settingsBackdrop').addEventListener('click', closeSettings);
+document.getElementById('profileCurrent').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } });
+
+/* ---------- the add form opens when you start adding ---------- */
+(() => {
+  const panel = document.getElementById('addPanel'), name = document.getElementById('taskName');
+  panel.addEventListener('focusin', () => panel.classList.add('open'));
+  panel.addEventListener('focusout', () => setTimeout(() => {
+    if (!panel.contains(document.activeElement) && !name.value.trim() && !document.getElementById('popMenu')) panel.classList.remove('open');
+  }, 150));
+})();
+
 document.getElementById('copyBtn').addEventListener('click', copyVisible);
 document.getElementById('selectBtn').addEventListener('click', () => setSelectMode(!selectMode));
 document.getElementById('templateBtn').addEventListener('click', e => openTemplateMenu(e.currentTarget));
@@ -3785,6 +4106,7 @@ document.getElementById('searchClear').addEventListener('click', () => { clearSe
 // Keyboard shortcuts: N new task, / search, Esc closes things
 document.addEventListener('keydown', e => {
   const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
+  if (e.key === 'Escape' && settingsOpen()) { closeSettings(); return; }
   if (e.key === 'Escape' && document.getElementById('shareMenu')) { closeShareMenu(); return; }
   if (e.key === 'Escape' && document.getElementById('popMenu')) { closePopMenu(); return; }
   if (e.key === 'Escape' && selectMode && !(e.target.closest && e.target.closest('input, textarea, select'))) { setSelectMode(false); return; }
@@ -3793,6 +4115,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape' && !typing) {
     if (typeof profileMenuOpen !== 'undefined' && profileMenuOpen) { profileMenuOpen = false; renderProfiles(); return; }
+    if (editingIds.size) { editingIds.clear(); saveTasks(); render(); return; }
     if (expandedIds.size) { expandedIds.clear(); render(); return; }
     if (searchQuery) { clearSearch(); return; }
     return;
@@ -3882,11 +4205,29 @@ if (window.workqueue) {
   window.workqueue.onModeState(setUI);
   document.addEventListener('wq:style', () => setUI(null));
   setUI(null);
-  document.body.appendChild(wrap);
+  const setApp = document.getElementById('setApp');
+  setApp.hidden = false;
+  const wmLabel = document.createElement('span'); wmLabel.className = 'field-label'; wmLabel.textContent = 'Window';
+  setApp.appendChild(wmLabel);
+  setApp.appendChild(wrap);
+  // in Widget mode, Front and Back also sit in the header so they're one click away
+  const quick = document.createElement('div'); quick.className = 'quick-layer';
+  const qf = document.createElement('button'), qb = document.createElement('button');
+  [qf, qb].forEach(b => { b.type = 'button'; b.className = 'icon-btn'; quick.appendChild(b); });
+  qf.title = 'Bring the widget in front'; qb.title = 'Send the widget behind';
+  qf.addEventListener('click', () => frontBtn.click()); qb.addEventListener('click', () => backBtn.click());
+  document.getElementById('headRight').prepend(quick);
+  const paintQuick = () => { qf.innerHTML = ico('up'); qb.innerHTML = ico('down'); quick.hidden = winMode !== 'widget'; };
+  const origSetUI = setUI;
+  window.workqueue.onModeState(() => setTimeout(paintQuick, 0));
+  [floatBtn, widgetBtn, glueBtn, frontBtn, backBtn].forEach(b => b.addEventListener('click', () => setTimeout(paintQuick, 50)));
+  document.addEventListener('wq:style', paintQuick);
+  window.workqueue.getMode().then(() => setTimeout(paintQuick, 0));
+  paintQuick();
 
   // Start on login checkbox in the controls row
   if (window.workqueue.getStartup) {
-    const controls = document.querySelector('.controls');
+    const controls = document.getElementById('setApp');
     if (controls) {
       const label = document.createElement('label');
       label.className = 'toggle';
@@ -3894,8 +4235,7 @@ if (window.workqueue) {
       const cb = document.createElement('input'); cb.type = 'checkbox';
       const span = document.createElement('span'); span.textContent = 'Start on login';
       label.appendChild(cb); label.appendChild(span);
-      const remind = document.getElementById('remindBtn');
-      if (remind) controls.insertBefore(label, remind); else controls.appendChild(label);
+      controls.insertBefore(label, controls.querySelector('.field-label'));
       window.workqueue.getStartup().then(v => { cb.checked = !!v; });
       cb.addEventListener('change', async () => { cb.checked = !!(await window.workqueue.setStartup(cb.checked)); });
     }
@@ -3923,7 +4263,7 @@ if (window.workqueue) {
     const tools = document.querySelector('.data-tools');
     const ver = document.createElement('p'); ver.className = 'app-version'; ver.id = 'appVersion';
     const hintEl = document.getElementById('shortcutHint');
-    (hintEl || tools).insertAdjacentElement('afterend', ver);
+    document.getElementById('setApp').appendChild(ver);
     const banner = document.createElement('div'); banner.className = 'update-banner'; banner.id = 'updateBanner'; banner.hidden = true;
     const listsBar = document.getElementById('listsBar');
     if (listsBar) listsBar.insertAdjacentElement('beforebegin', banner);
