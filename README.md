@@ -103,9 +103,21 @@ Your data stays. To remove it too, delete the `%AppData%\WorkQueue` folder.
 - **My Day:** the tab before Main. Tap the sun on any task to plan it for today. The
   list starts fresh each morning, with suggestions for anything overdue, due today,
   or left over from yesterday.
+  Unfinished tasks wait in the next day's suggestions, or turn on **Settings → My Day →
+  Carry unfinished tasks over to the next day** to roll them forward automatically
+  (a "↪ since" chip shows how long one has been carried).
+- **Planner:** the tab next to My Day shows the next 7 days. Drag tasks onto a day,
+  use a task's Plan menu, or type a new task straight onto a day; each one appears
+  in My Day on its day, by itself. Missed plans and later plans are listed too, and
+  the arrows move between weeks. You can also set "Plan for My Day" in a task's
+  editor, or plan several selected tasks at once.
 - **Select several:** click **Select**, or Ctrl-click or Shift-click tasks, then
   complete, add to My Day, add to a list, change urgency, snooze, copy or delete them
   together. Press Esc when you're done.
+- **Sub-tasks:** add steps while you add a task (open the add form) or later in the
+  editor. Enter adds a step; Shift+Enter starts a new line inside it, and steps can
+  be as long as you like. Pasting a bulleted or numbered list adds each item as its
+  own step; pasting plain text keeps it together as one step.
 - **Templates:** open a task and choose **Save as template**. Add it again any time
   from **From template** next to Add task. Templates keep sub-tasks, repeats and
   links.

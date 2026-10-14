@@ -499,7 +499,17 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
     content: ''; position: absolute; inset: 0;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E5C48' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E") center/12px no-repeat;
   }
-  .sub-name { flex: 1; font-size: 13.5px; font-weight: 600; min-width: 0; word-break: break-word; }
+  .sub-name { flex: 1; font-size: 13.5px; font-weight: 600; min-width: 0; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.45; }
+  .sub-row { align-items: flex-start; }
+  .sub-row .sub-check, .sub-row .sub-num { margin-top: 1px; }
+  .sub-row .sub-x { margin-top: -1px; }
+  .step-input { flex: 1; min-width: 0; resize: none; overflow-y: auto; line-height: 1.45; min-height: 38px; max-height: 240px;
+    font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface-2);
+    border: 1.5px solid var(--border); border-radius: 11px; padding: 9px 13px; }
+  .step-input:focus { outline: 2.5px solid var(--primary); outline-offset: 1px; }
+  .sub-add { align-items: flex-end; }
+  html.work .step-input { border-radius: 4px; border: 1px solid var(--border); border-bottom-color: var(--text-faint); background: var(--surface); font-weight: 400; }
+  html.work .step-input:focus { outline: none; border-bottom-color: var(--primary); box-shadow: inset 0 -1px 0 var(--primary); }
   .sub-row.done .sub-name { text-decoration: line-through; color: var(--text-faint); }
   .sub-x {
     width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
@@ -746,6 +756,10 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
   .add-row .btn-primary { padding: 10px 18px; }
   .add-more { display: none; flex-direction: column; gap: 12px; padding: 12px 6px 6px; }
   .add-panel.open .add-more { display: flex; }
+  #addSubList:not(:empty) { margin-bottom: 8px; }
+  .sub-num { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); color: var(--text-dim);
+    font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+  html.work .sub-num { border-radius: 3px; font-weight: 600; }
   .add-hint { margin: 0; font-size: 12px; color: var(--text-faint); font-weight: 600; }
   .task-main { padding-top: 11px; padding-bottom: 11px; }
   .task-meta { margin-top: 5px; }
@@ -814,6 +828,59 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
   html.work :is(.td-empty, .td-history, .td-soft) { font-weight: 400; }
   html.work :is(.edit-open, .edit-done) { box-shadow: none; padding: 5px 16px; }
   html.work .task.editing .expand-inner { background: var(--surface-2); }
+
+  /* ---------- Planner ---------- */
+  .planner { display: flex; flex-direction: column; gap: 12px; }
+  .pl-nav { display: flex; align-items: center; gap: 8px; }
+  .pl-nav .icon-btn { font-size: 20px; }
+  .pl-nav .icon-btn:disabled { opacity: .35; cursor: default; }
+  .pl-range { flex: 1; font-family: 'Fredoka', system-ui, sans-serif; font-weight: 600; font-size: 18px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .pl-range-dates { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 700; color: var(--text-faint); }
+  .pl-hint { margin: -4px 0 0; font-size: 12px; color: var(--text-faint); font-weight: 600; }
+  .pl-day { background: var(--surface); border: 1.5px solid var(--border-soft); border-radius: var(--r-md); padding: 10px 12px; transition: border-color .15s, background .15s; }
+  .pl-day.is-today { border-color: var(--primary); }
+  .pl-day.pl-missed { border-color: color-mix(in srgb, var(--red) 55%, var(--border-soft)); }
+  .pl-day.drop { border-color: var(--primary); border-style: dashed; background: var(--surface-2); }
+  .pl-day-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+  .pl-day-name { font-family: 'Fredoka', system-ui, sans-serif; font-weight: 600; font-size: 15.5px; }
+  .pl-day-date { color: var(--text-faint); font-size: 12px; font-weight: 700; }
+  .pl-count { margin-left: auto; font-size: 12px; color: var(--text-faint); font-weight: 800; }
+  .pl-list { display: flex; flex-direction: column; gap: 5px; }
+  .pl-item { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; background: var(--surface-2); border-radius: 9px; cursor: grab; }
+  .pl-item.dragging { opacity: .45; }
+  .pl-item .status-pill { font-size: 10px; padding: 2px 7px; }
+  .pl-name { flex: 1; min-width: 0; border: none; background: none; padding: 0; text-align: left; cursor: pointer; color: var(--text);
+    font-family: inherit; font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+  .pl-name:hover { text-decoration: underline; }
+  .pl-sub, .pl-when { font-size: 11.5px; color: var(--text-faint); font-weight: 700; white-space: nowrap; }
+  .pl-btn { flex-shrink: 0; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-dim); border-radius: 999px;
+    padding: 3px 10px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .pl-btn:hover { border-color: var(--primary); color: var(--text); }
+  .pl-btn .ico { width: 12px; height: 12px; }
+  .pl-empty { font-size: 12.5px; color: var(--text-faint); font-weight: 600; padding: 1px 2px 2px; }
+  .pl-add { display: flex; gap: 6px; margin-top: 8px; }
+  .pl-add input { flex: 1; min-width: 0; background: var(--surface-2); border: 1.5px dashed var(--border); border-radius: 9px;
+    padding: 6px 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .pl-add input:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-style: solid; }
+  .pl-more { margin-top: 8px; font-size: 13px; }
+  .plan-chip { white-space: nowrap; }
+  .carry-chip { white-space: nowrap; background: rgba(240,169,126,0.2); color: var(--text); }
+  html.work .mini-chip.carry-chip { background: #FFF4CE; color: #835B00; border-color: transparent; }
+  html.work.dark .mini-chip.carry-chip { background: #463100; color: #F8E28B; }
+  .plan-chip .ico { width: 12px; height: 12px; vertical-align: -2px; }
+  .pl-date-picker { position: fixed; z-index: 9800; width: 1px; height: 1px; opacity: 0; border: none; padding: 0; }
+  .pl-date-picker.visible { width: auto; height: auto; opacity: 1; padding: 6px 8px; border: 1.5px solid var(--primary); border-radius: 8px; background: var(--surface); color: var(--text); }
+  html.work .pl-range { font-size: 16px; }
+  html.work :is(.pl-range-dates, .pl-day-date, .pl-hint, .pl-empty, .pl-sub, .pl-when) { font-weight: 400; }
+  html.work .pl-day { border-width: 1px; border-radius: 6px; }
+  html.work .pl-day-name { font-size: 14.5px; }
+  html.work .pl-count { font-weight: 600; }
+  html.work .pl-item { border-radius: 4px; }
+  html.work .pl-name { font-weight: 400; font-size: 14px; }
+  html.work .pl-btn { border-radius: 4px; border-width: 1px; font-weight: 600; color: var(--text); }
+  html.work .pl-btn:hover { background: var(--surface-2); }
+  html.work .pl-add input { border-radius: 4px; border-width: 1px; font-weight: 400; background: var(--surface); }
+  html.work .plan-chip { background: var(--select-bg); color: var(--select-ink); border-color: transparent; }
 
   /* ---------- My Day, select several, templates, links ---------- */
   .myday-tab .ico, .myday-tab .ico-e { margin-right: 2px; }
@@ -1202,7 +1269,12 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
         <span class="field-label">Contexts</span>
         <div class="picker-row" id="addContexts"></div>
       </div>
-      <p class="add-hint">Press Enter to add. Everything below the name is optional.</p>
+      <div>
+        <span class="field-label" id="addSubLabel">Sub-tasks</span>
+        <div class="sub-list" id="addSubList"></div>
+        <div class="sub-add"><textarea id="addSubInput" class="step-input" rows="1" placeholder="Add a step (Shift+Enter for a new line)" aria-labelledby="addSubLabel"></textarea><button type="button" id="addSubBtn" title="Add this step" aria-label="Add this step">+</button></div>
+      </div>
+      <p class="add-hint">Press Enter in the name box to add the task. Everything below the name is optional.</p>
     </div>
   </div>
 
@@ -1241,6 +1313,11 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
       </div>
       <button class="ghost-btn theme-btn" id="themeBtn" type="button"></button>
     </div>
+  </section>
+  <section class="set-sec">
+    <h3>My Day</h3>
+    <label class="toggle"><input type="checkbox" id="carryToggle"><span>Carry unfinished tasks over to the next day</span></label>
+    <p class="set-note">When on, anything in My Day that isn't finished moves into the next day's My Day by itself, including after days away. When off, it waits in the next day's suggestions and the Planner's Missed list.</p>
   </section>
   <section class="set-sec">
     <h3>View</h3>
@@ -1296,7 +1373,7 @@ const STYLE_KEY = 'work-queue-style';
 const ICON_EMOJI = { bell: '\u{1F514}', people: '\u{1F465}', streak: '\u{1F525}', download: '\u2B07', upload: '\u2B06',
   link: '\u{1F517}', folder: '\u{1F5C2}\uFE0F', restore: '\u21BA', pin: '\u{1F4CC}', widget: '\u{1FA9F}', glue: '\u{1F5BC}\uFE0F',
   up: '\u2B06\uFE0F', down: '\u2B07\uFE0F', system: '\u{1F5A5}\uFE0F', sun: '\u2600\uFE0F', moon: '\u{1F319}', done: '\u{1F389}',
-  warning: '\u26A0\uFE0F', edit: '\u270E', trash: '\u{1F5D1}', check: '\u2713', sparkle: '\u2728', briefcase: '\u{1F4BC}', history: '', copy: '\u{1F4CB}', select: '\u2611\uFE0F', gear: '\u2699\uFE0F', file: '\u{1F4CE}', template: '\u{1F9E9}', myday: '\u2600\uFE0F' };
+  warning: '\u26A0\uFE0F', edit: '\u270E', trash: '\u{1F5D1}', check: '\u2713', sparkle: '\u2728', briefcase: '\u{1F4BC}', history: '', copy: '\u{1F4CB}', select: '\u2611\uFE0F', gear: '\u2699\uFE0F', file: '\u{1F4CE}', template: '\u{1F9E9}', myday: '\u2600\uFE0F', calendar: '\u{1F4C5}', plus: '\uFF0B' };
 const ICON_PATHS = {
   bell: '<path d="M10 3a4.5 4.5 0 0 0-4.5 4.5v2.8L4 13h12l-1.5-2.7V7.5A4.5 4.5 0 0 0 10 3z"/><path d="M8.3 15.5a1.8 1.8 0 0 0 3.4 0"/>',
   people: '<circle cx="7.5" cy="7" r="2.5"/><path d="M3 15.5c.4-2.4 2.2-4 4.5-4s4.1 1.6 4.5 4"/><circle cx="13.8" cy="7.8" r="2"/><path d="M13.6 11.6c1.8.1 3.1 1.4 3.4 3.4"/>',
@@ -1327,6 +1404,8 @@ const ICON_PATHS = {
   select: '<rect x="3.5" y="3.5" width="13" height="13" rx="2"/><path d="m6.8 10.2 2.2 2.2 4.2-4.6"/>',
   file: '<path d="M11.5 3H6a1.5 1.5 0 0 0-1.5 1.5v11A1.5 1.5 0 0 0 6 17h8a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M11.5 3v4h4"/>',
   template: '<rect x="3.5" y="3.5" width="13" height="13" rx="1.5"/><path d="M3.5 8h13M8 8v8.5"/>',
+  calendar: '<rect x="3.5" y="4.5" width="13" height="12" rx="1.5"/><path d="M3.5 8.5h13M7 3v3M13 3v3"/>',
+  plus: '<path d="M10 4.5v11M4.5 10h11"/>',
   myday: '<circle cx="10" cy="10" r="3"/><path d="M10 2.5v1.5M10 16v1.5M2.5 10H4M16 10h1.5M4.7 4.7l1 1M14.3 14.3l1 1M4.7 15.3l1-1M14.3 5.7l1-1"/>'
 };
 function isWork() { return document.documentElement.classList.contains('work'); }
@@ -1453,7 +1532,11 @@ let doneCollapsed = false;
 let notifyEnabled = false;
 let searchQuery = '';
 let historyCollapsed = true;
+let carryOver = false;                  // carry unfinished My Day tasks into the next day
 const MYDAY_ID = 'list_myday';          // virtual list: tasks picked for today
+const PLANNER_ID = 'list_planner';      // virtual list: plan My Day ahead of time
+let plannerWeek = 0;                    // 0 = the 7 days starting today
+let plannerPoolAll = false;
 const TEMPLATES_KEY = 'templates';      // per profile
 let templates = [];
 let selectMode = false;
@@ -1724,7 +1807,7 @@ async function deleteProfile(id) {
 async function loadAll() {
   // reset per-profile state so switching profiles never bleeds across
   tasks = []; lists = []; contextRegistry = [];
-  sortMode = 'urgency'; groupByContext = false; doneCollapsed = false; historyCollapsed = true; historyShown = 7;
+  sortMode = 'urgency'; groupByContext = false; doneCollapsed = false; historyCollapsed = true; historyShown = 7; carryOver = false;
   selectedIds.clear(); selectMode = false; templates = []; archive = []; document.body.classList.remove('selecting');
   activeListId = null; notifyEnabled = false; expandedIds.clear(); editingIds.clear();
 
@@ -1804,6 +1887,7 @@ async function loadAll() {
       if (p.groupByContext !== undefined) groupByContext = p.groupByContext;
       if (p.doneCollapsed !== undefined) doneCollapsed = p.doneCollapsed;
       if (p.historyCollapsed !== undefined) historyCollapsed = p.historyCollapsed;
+      if (p.carryOver !== undefined) carryOver = !!p.carryOver;
       if (p.activeListId) activeListId = p.activeListId;
       if (p.notifyEnabled !== undefined) notifyEnabled = p.notifyEnabled;
     }
@@ -1816,12 +1900,13 @@ async function loadAll() {
   try { const r = await store.get(pkey(TEMPLATES_KEY)); templates = r ? JSON.parse(r) : []; if (!Array.isArray(templates)) templates = []; } catch (e) { templates = []; }
   try { const r = await store.get(pkey(ARCHIVE_KEY)); archive = r ? JSON.parse(r) : []; if (!Array.isArray(archive)) archive = []; } catch (e) { archive = []; }
   archiveOld();
+  if (carryOver) carryOverUnfinished();
 
   // Reminders are app-wide now that they cover every profile
   if (reminderPrefs) notifyEnabled = !!reminderPrefs.enabled;
   else { reminderPrefs = { enabled: notifyEnabled, time: '09:00', nudged: {} }; saveReminderPrefs(); }
 
-  if (!activeListId || (activeListId !== MYDAY_ID && !lists.some(l => l.id === activeListId))) activeListId = lists[0].id;
+  if (!activeListId || (activeListId !== MYDAY_ID && activeListId !== PLANNER_ID && !lists.some(l => l.id === activeListId))) activeListId = lists[0].id;
 
   document.getElementById('sortMode').value = sortMode;
   document.getElementById('groupToggle').checked = groupByContext;
@@ -1835,7 +1920,7 @@ async function loadAll() {
 async function saveTasks() { try { await store.set(pkey(TASKS_KEY), JSON.stringify(tasks)); } catch(e){} try { syncSharedFromProfile(); } catch (e) {} mirrorLinked(); }
 async function saveContexts() { try { await store.set(pkey(CONTEXTS_KEY), JSON.stringify(contextRegistry)); } catch(e){} mirrorLinked(); }
 async function saveReminderPrefs() { try { await store.set(REMIND_KEY, JSON.stringify(reminderPrefs)); } catch (e) {} }
-async function saveSettings() { try { await store.set(pkey(SETTINGS_KEY), JSON.stringify({sortMode, groupByContext, doneCollapsed, historyCollapsed, activeListId, notifyEnabled})); } catch(e){} mirrorLinked(); }
+async function saveSettings() { try { await store.set(pkey(SETTINGS_KEY), JSON.stringify({sortMode, groupByContext, doneCollapsed, historyCollapsed, activeListId, notifyEnabled, carryOver})); } catch(e){} mirrorLinked(); }
 async function saveLists() { try { await store.set(pkey(LISTS_KEY), JSON.stringify(lists)); } catch(e){} mirrorLinked(); }
 
 /* ---------- list ops ---------- */
@@ -1888,7 +1973,7 @@ function deleteContext(name) {
    manual order, and reminder bookkeeping). Edits made in one profile show up in
    the others; deleting or un-sharing leaves a tombstone so the other profiles
    drop their copies too. */
-const LOCAL_FIELDS = ['listIds', 'manualOrder', 'notifiedOn', 'undoState', 'myDay'];
+const LOCAL_FIELDS = ['listIds', 'manualOrder', 'notifiedOn', 'undoState', 'myDay', 'carriedSince'];
 let sharedStore = { tasks: [], removed: {} };
 function stripLocal(t) {
   const c = JSON.parse(JSON.stringify(t));
@@ -2123,7 +2208,7 @@ async function sendTaskToProfile(taskId, targetProfileId, mode) {
 }
 
 /* ---------- task ops ---------- */
-function addTask({name, type, intervalDays, weekdays, dueDate, contexts, description, urgency}) {
+function addTask({name, type, intervalDays, weekdays, dueDate, contexts, description, urgency, subtasks}) {
   const maxOrder = tasks.length ? Math.max(...tasks.map(t => t.manualOrder ?? 0)) : -1;
   tasks.push({
     id: 'task_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
@@ -2138,9 +2223,9 @@ function addTask({name, type, intervalDays, weekdays, dueDate, contexts, descrip
     anchorDay: parseInt((dueDate || todayStr()).slice(8, 10), 10),
     ...(type !== 'once' && Array.isArray(weekdays) && weekdays.length ? { weekdays: [...weekdays].sort() } : {}),
     doneLog: [],
-    listIds: (activeListId === MAIN_LIST_ID || activeListId === MYDAY_ID) ? [] : [activeListId],
+    listIds: (activeListId === MAIN_LIST_ID || activeListId === MYDAY_ID || activeListId === PLANNER_ID) ? [] : [activeListId],
     ...(activeListId === MYDAY_ID ? { myDay: todayStr() } : {}),
-    subtasks: []
+    subtasks: (subtasks || []).map(n => ({ id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: n, done: false }))
   });
   saveTasks(); render();
 }
@@ -2172,6 +2257,8 @@ function applyCompletion(t) {
   t.undoState = { lastDone: t.lastDone, dueDate: t.dueDate, completedAt: t.completedAt,
                   clearedDue: t.clearedDue, logLen: (t.doneLog || []).length,
                   subs: (t.subtasks || []).map(s => !!s.done) };
+  t.undoState.carriedSince = t.carriedSince || null; // finishing ends the carry-over streak
+  delete t.carriedSince;
   logCompletion(t);
   if (t.type === 'once') t.completedAt = todayStr();
   else {
@@ -2203,6 +2290,7 @@ function undoComplete(id) {
       t.lastDone = u.lastDone ?? null;
       t.dueDate = u.dueDate ?? null;
       t.completedAt = u.completedAt ?? null;
+      if (u.carriedSince) t.carriedSince = u.carriedSince;
       t.clearedDue = u.clearedDue ?? null;
       if (Array.isArray(t.doneLog) && typeof u.logLen === 'number') t.doneLog = t.doneLog.slice(0, u.logLen);
       (t.subtasks || []).forEach((s, i) => { if (i < u.subs.length) s.done = u.subs[i]; });
@@ -2246,7 +2334,8 @@ function taskDetailHTML(t) {
   if (t.remindAt) facts.push(['Reminder', escapeHTML(fmtHM(t.remindAt))]);
   const inLists = lists.filter(l => l.id !== MAIN_LIST_ID && (t.listIds || []).includes(l.id)).map(l => escapeHTML(l.name));
   if (inLists.length) facts.push(['Lists', inLists.join(', ')]);
-  if (inMyDay(t)) facts.push(['Today', 'In My Day']);
+  if (inMyDay(t)) facts.push(['Today', 'In My Day' + (t.carriedSince ? ` <span class="td-soft">(carried over ${escapeHTML(carriedLabel(t.carriedSince))})</span>` : '')]);
+  else if (t.myDay && t.myDay > todayStr()) facts.push(['Planned', 'My Day on ' + escapeHTML(longDate(t.myDay)) + ` <span class="td-soft">(${escapeHTML(relDays(t.myDay))})</span>`]);
   if (t.shared) facts.push(['Sharing', 'Shared with every profile']);
 
   const subs = t.subtasks || [];
@@ -2349,7 +2438,7 @@ function checkDayChange() {
   const d = todayStr();
   if (d === shownDay) return false;
   shownDay = d;
-  if (loaded) { archiveOld(); applyIcons(); render(); checkDueReminders(); }
+  if (loaded) { archiveOld(); if (carryOver) carryOverUnfinished(); applyIcons(); render(); checkDueReminders(); }
   return true;
 }
 setInterval(checkDayChange, 30 * 1000);
@@ -2375,6 +2464,7 @@ function archiveOld() {
 }
 function archiveFor(listId) {
   if (listId === MYDAY_ID) return [];
+  if (listId === PLANNER_ID) return archive;
   if (listId === MAIN_LIST_ID) return archive;
   return archive.filter(t => (t.listIds || []).includes(listId));
 }
@@ -2393,13 +2483,220 @@ function renderArchiveMatches() {
   box.querySelectorAll('[data-unarchive]').forEach(b => b.addEventListener('click', () => restoreTask(b.dataset.unarchive, b.dataset.day)));
 }
 
+/* ---------- Planner: plan My Day ahead of time ----------
+   A task's myDay holds the day it's planned for. Today's plans are My Day;
+   future plans show up in My Day on their day, all by themselves. */
+function shortPlanDay(iso) {
+  const n = daysBetween(todayStr(), iso);
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Tomorrow';
+  const d = new Date(iso + 'T00:00:00');
+  return n > 1 && n < 7 ? d.toLocaleDateString(undefined, { weekday: 'short' }) : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function planDayTitle(iso) {
+  const n = daysBetween(todayStr(), iso);
+  return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long' });
+}
+function planDayDate(iso) { return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+function setPlan(ids, day) {
+  const prev = ids.map(id => tasks.find(x => x.id === id)).filter(Boolean).map(t => [t, t.myDay || null]);
+  if (!prev.length) return;
+  prev.forEach(([t]) => { t.myDay = day || null; delete t.carriedSince; });
+  saveTasks(); render();
+  const what = prev.length === 1 ? '\u201C' + prev[0][0].name + '\u201D' : prev.length + ' tasks';
+  showToast(!day ? 'Unplanned ' + what : day === todayStr() ? 'Added ' + what + ' to My Day' : 'Planned ' + what + ' for ' + longDate(day),
+    () => { prev.forEach(([t, d]) => { t.myDay = d; }); saveTasks(); render(); });
+}
+function pickPlanDate(anchor, current, onPick) {
+  const inp = document.createElement('input');
+  inp.type = 'date'; inp.className = 'pl-date-picker'; inp.min = todayStr(); if (current) inp.value = current;
+  const r = anchor.getBoundingClientRect();
+  inp.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 180)) + 'px'; inp.style.top = Math.min(r.bottom + 4, window.innerHeight - 44) + 'px';
+  document.body.appendChild(inp);
+  let done = false;
+  const finish = () => { if (done) return; done = true; setTimeout(() => inp.remove(), 0); };
+  inp.addEventListener('change', () => { const v = inp.value; finish(); if (v) onPick(v); });
+  inp.addEventListener('blur', () => setTimeout(finish, 250));
+  inp.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); finish(); } });
+  try { inp.showPicker(); } catch (e) { inp.classList.add('visible'); inp.focus(); }
+}
+function planMenuItems(anchor, current, onPick) {
+  const today = todayStr();
+  const items = [{ label: 'Today (My Day)', icon: 'myday', onClick: () => onPick(today) },
+                 { label: 'Tomorrow', onClick: () => onPick(addDays(today, 1)) }];
+  for (let i = 2; i <= 6; i++) { const d = addDays(today, i); items.push({ label: planDayTitle(d) + ', ' + planDayDate(d), onClick: () => onPick(d) }); }
+  items.push({ label: 'In a week, ' + planDayDate(addDays(today, 7)), onClick: () => onPick(addDays(today, 7)) });
+  items.push({ label: 'Pick a date\u2026', icon: 'calendar', onClick: () => pickPlanDate(anchor, current, onPick) });
+  if (current) items.push({ sep: true }, { label: 'Not planned', onClick: () => onPick(null) });
+  return items;
+}
+function renderPlanner(active, root) {
+  visibleOrder = [];
+  const today = todayStr();
+  const start = addDays(today, plannerWeek * 7);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const last = days[6];
+  const byDay = Object.fromEntries(days.map(d => [d, []]));
+  const missed = [], later = [], pool = [];
+  const order = (a, b) => (a.diff ?? 1e9) - (b.diff ?? 1e9) || a.urgency - b.urgency || a.name.localeCompare(b.name);
+  active.forEach(t => {
+    if (!t.myDay || (t.myDay < today && planFinished(t))) pool.push(t);
+    else if (byDay[t.myDay]) byDay[t.myDay].push(t);
+    else if (t.myDay < today) missed.push(t);
+    else if (t.myDay > last) later.push(t);
+  });
+  const dueChip = t => t.status === 'overdue' ? `<span class="status-pill overdue">${Math.abs(t.diff)}d overdue</span>`
+    : t.status === 'today' ? `<span class="status-pill today">Due today</span>`
+    : (t.diff != null && t.diff <= 7) ? `<span class="status-pill upcoming">Due ${t.diff === 1 ? 'tomorrow' : 'in ' + t.diff + 'd'}</span>` : '';
+  const item = (t, kind) => {
+    const subs = t.subtasks || [];
+    return `<div class="pl-item" draggable="true" data-pl-id="${t.id}">
+      <span class="hist-dot" style="background:${urgColor(t.urgency)}"></span>
+      <span class="pl-name" role="button" tabindex="0" data-pl-open="${t.id}" title="Open this task in Main (or drag it to another day)">${escapeHTML(t.name)}${subs.length ? ` <span class="pl-sub">${subs.filter(x => x.done).length}/${subs.length}</span>` : ''}</span>
+      ${kind === 'day' && t.carriedSince && t.myDay === todayStr() ? `<span class="pl-when">\u21AA ${escapeHTML(carriedLabel(t.carriedSince))}</span>` : ''}
+      ${kind === 'later' || kind === 'missed' ? `<span class="pl-when">${kind === 'missed' ? 'was ' : ''}${escapeHTML(shortPlanDay(t.myDay))}</span>` : ''}
+      ${dueChip(t)}
+      ${kind === 'missed' ? `<button type="button" class="pl-btn" data-pl-today="${t.id}" title="Plan it for today">Today</button>` : ''}
+      <button type="button" class="pl-btn" data-pl-plan="${t.id}" data-pop="1" title="${kind === 'pool' ? 'Plan this task for a day' : 'Move to another day'}">${kind === 'pool' ? 'Plan' : 'Move'}</button>
+      ${kind !== 'pool' ? `<button type="button" class="sub-x" data-pl-clear="${t.id}" title="Unplan (keeps the task)" aria-label="Unplan ${escapeHTML(t.name)}">\u00D7</button>` : ''}
+    </div>`;
+  };
+  const range = plannerWeek === 0 ? 'Next 7 days' : plannerWeek === 1 ? 'The week after' : planDayDate(start) + ' \u2013 ' + planDayDate(last);
+  const poolSorted = pool.sort(order);
+  const poolShown = plannerPoolAll ? poolSorted : poolSorted.slice(0, 20);
+  root.innerHTML = `<div class="planner">
+    <div class="pl-nav">
+      <button type="button" class="icon-btn" data-pl-week="-1" ${plannerWeek === 0 ? 'disabled' : ''} title="Earlier" aria-label="Earlier week">\u2039</button>
+      <span class="pl-range">${range}<span class="pl-range-dates">${escapeHTML(planDayDate(start))} \u2013 ${escapeHTML(planDayDate(last))}</span></span>
+      ${plannerWeek ? `<button type="button" class="pl-btn" data-pl-week="0">Back to today</button>` : ''}
+      <button type="button" class="icon-btn" data-pl-week="1" title="Later" aria-label="Later week">\u203A</button>
+    </div>
+    <p class="pl-hint">Drag tasks onto a day, or use Plan. Planned tasks appear in My Day on their day.</p>
+    ${plannerWeek === 0 && missed.length ? `<section class="pl-day pl-missed"><div class="pl-day-head"><span class="pl-day-name">Missed</span><span class="pl-day-date">planned for an earlier day, not done</span><span class="pl-count">${missed.length}</span></div>
+      <div class="pl-list">${missed.sort(order).map(t => item(t, 'missed')).join('')}</div></section>` : ''}
+    ${days.map(d => `<section class="pl-day ${d === today ? 'is-today' : ''}" data-pl-day="${d}" aria-label="${escapeHTML(planDayTitle(d) + ', ' + planDayDate(d))}">
+      <div class="pl-day-head"><span class="pl-day-name">${d === today ? ico('myday') + ' ' : ''}${escapeHTML(planDayTitle(d))}</span><span class="pl-day-date">${escapeHTML(planDayDate(d))}${d === today ? ' \u00B7 My Day' : ''}</span><span class="pl-count">${byDay[d].length || ''}</span></div>
+      <div class="pl-list">${byDay[d].length ? byDay[d].sort(order).map(t => item(t, 'day')).join('') : `<div class="pl-empty">Nothing planned</div>`}</div>
+      <div class="pl-add"><input type="text" data-pl-new="${d}" placeholder="Add a task for ${escapeHTML(d === today ? 'today' : shortPlanDay(d))}" aria-label="New task for ${escapeHTML(planDayTitle(d))}"><button type="button" class="pl-btn" data-pl-pick="${d}" data-pop="1" title="Plan one of your tasks for this day">${ico('plus')} From your tasks</button></div>
+    </section>`).join('')}
+    ${later.length ? `<section class="pl-day pl-later"><div class="pl-day-head"><span class="pl-day-name">Later</span><span class="pl-day-date">planned after ${escapeHTML(planDayDate(last))}</span><span class="pl-count">${later.length}</span></div>
+      <div class="pl-list">${later.sort((a, b) => a.myDay.localeCompare(b.myDay)).map(t => item(t, 'later')).join('')}</div></section>` : ''}
+    <section class="pl-day pl-pool" data-pl-pool="1"><div class="pl-day-head"><span class="pl-day-name">Not planned yet</span><span class="pl-day-date">drag here to unplan</span><span class="pl-count">${pool.length}</span></div>
+      <div class="pl-list">${poolShown.length ? poolShown.map(t => item(t, 'pool')).join('') : `<div class="pl-empty">Every open task is planned.</div>`}</div>
+      ${pool.length > poolShown.length ? `<button type="button" class="link-btn pl-more" data-pl-more="1">Show all ${pool.length}</button>` : ''}
+    </section>
+  </div>`;
+
+  // week navigation
+  root.querySelectorAll('[data-pl-week]').forEach(b => b.addEventListener('click', () => {
+    const n = parseInt(b.dataset.plWeek, 10);
+    plannerWeek = n === 0 ? 0 : Math.max(0, plannerWeek + n); render();
+  }));
+  const more = root.querySelector('[data-pl-more]');
+  if (more) more.addEventListener('click', () => { plannerPoolAll = true; render(); });
+  // plan / move / unplan / today
+  root.querySelectorAll('[data-pl-plan]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const t = tasks.find(x => x.id === b.dataset.plPlan); if (!t) return;
+    openPopMenu(b, planMenuItems(b, t.myDay, d => setPlan([t.id], d)));
+  }));
+  root.querySelectorAll('[data-pl-clear]').forEach(b => b.addEventListener('click', () => setPlan([b.dataset.plClear], null)));
+  root.querySelectorAll('[data-pl-today]').forEach(b => b.addEventListener('click', () => setPlan([b.dataset.plToday], today)));
+  // open a task in Main
+  root.querySelectorAll('[data-pl-open]').forEach(b => b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } }));
+  root.querySelectorAll('[data-pl-open]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.plOpen;
+    activeListId = MAIN_LIST_ID; activeFilter = 'All'; expandedIds.add(id); saveSettings(); render();
+    const c = document.querySelector(`.task[data-id="${id}"]`); if (c) c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }));
+  // pick an existing task for a day
+  root.querySelectorAll('[data-pl-pick]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const day = b.dataset.plPick;
+    openPopMenu(b, poolSorted.slice(0, 15).map(t => ({ label: t.name, onClick: () => setPlan([t.id], day) })), 'Every open task is already planned.');
+  }));
+  // add a new task straight onto a day
+  root.querySelectorAll('[data-pl-new]').forEach(inp => inp.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !inp.value.trim()) return;
+    e.preventDefault();
+    const day = inp.dataset.plNew;
+    addTask({ name: inp.value.trim(), type: 'once', intervalDays: null, weekdays: null, dueDate: null, contexts: [], description: '', urgency: 3, subtasks: [] });
+    tasks[tasks.length - 1].myDay = day;
+    saveTasks(); render();
+    const again = document.querySelector(`[data-pl-new="${day}"]`); if (again) again.focus();
+  }));
+  // drag and drop between days and the pool
+  const TYPE = 'application/x-wq-plan';
+  root.querySelectorAll('.pl-item').forEach(el => {
+    el.addEventListener('dragstart', e => { e.dataTransfer.setData(TYPE, el.dataset.plId); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  });
+  const isPlanDrag = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes(TYPE);
+  root.querySelectorAll('[data-pl-day], [data-pl-pool]').forEach(zone => {
+    zone.addEventListener('dragover', e => { if (isPlanDrag(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; zone.classList.add('drop'); } });
+    zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drop'); });
+    zone.addEventListener('drop', e => {
+      if (!isPlanDrag(e)) return;
+      e.preventDefault(); zone.classList.remove('drop');
+      const id = e.dataTransfer.getData(TYPE);
+      const t = tasks.find(x => x.id === id); if (!t) return;
+      const day = zone.dataset.plDay || null;
+      if ((t.myDay || null) !== day) setPlan([id], day);
+    });
+  });
+}
+function copyPlanAsText() {
+  const today = todayStr(), start = addDays(today, plannerWeek * 7);
+  const open = t => !(t.type === 'once' && t.completedAt) && !isDoneToday(t);
+  const lines = ['Planner \u2014 ' + currentProfileName() + ', ' + longDate(start) + ' to ' + longDate(addDays(start, 6)), ''];
+  let n = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(start, i);
+    const ts = tasks.filter(t => t.myDay === d && open(t));
+    n += ts.length;
+    lines.push(planDayTitle(d) + ' (' + longDate(d) + ')');
+    if (ts.length) ts.forEach(t => lines.push(taskAsText(t).split('\n').map(l => '  ' + l).join('\n')));
+    else lines.push('  (nothing planned)');
+    lines.push('');
+  }
+  copyText(lines.join('\n').trim()).then(ok => showToast(ok ? 'Copied the plan (' + n + ' task' + (n === 1 ? '' : 's') + ') as text' : 'Couldn\u2019t reach the clipboard'));
+}
+
 /* ---------- My Day ---------- */
 function inMyDay(t) { return t.myDay === todayStr(); }
 function toggleMyDay(id) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.myDay = inMyDay(t) ? null : todayStr();
+  delete t.carriedSince;
   saveTasks(); render();
+}
+/* ---------- carry unfinished My Day tasks over ----------
+   With the setting on, anything planned for an earlier day and not finished
+   moves into today's My Day (at midnight, or when the app opens after days
+   away). A repeating task that was done on or after its planned day counts as
+   finished. carriedSince remembers the day it was first planned for. */
+function planFinished(t) {           // a repeating task done on or after its planned day finished that plan
+  return t.type !== 'once' && !!t.lastDone && !!t.myDay && t.lastDone >= t.myDay;
+}
+function unfinishedPastPlans() {
+  const today = todayStr();
+  return tasks.filter(t => t.myDay && t.myDay < today && !(t.type === 'once' && t.completedAt) && !planFinished(t));
+}
+function carryOverUnfinished() {
+  const list = unfinishedPastPlans();
+  if (!list.length) return [];
+  const today = todayStr();
+  const undo = list.map(t => [t, t.myDay, t.carriedSince]);
+  list.forEach(t => { if (!t.carriedSince) t.carriedSince = t.myDay; t.myDay = today; });
+  saveTasks();
+  return undo;
+}
+function carriedLabel(iso) {
+  const n = daysBetween(iso, todayStr());
+  if (n <= 1) return 'since yesterday';
+  if (n < 7) return 'since ' + new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+  return 'since ' + new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 // Suggestions shown at the top of My Day: overdue, due today, and yesterday's unfinished picks
 function renderMyDaySuggestions() {
@@ -2410,11 +2707,11 @@ function renderMyDaySuggestions() {
   const open = t => !(t.type === 'once' && t.completedAt) && !isDoneToday(t) && !inMyDay(t);
   const why = t => {
     const due = nextDue(t);
-    if (t.myDay === yesterday) return 'from yesterday';
+    if ((t.myDay === yesterday && !planFinished(t))) return 'from yesterday';
     if (due && due < today) return daysBetween(due, today) + 'd overdue';
     return 'due today';
   };
-  const picks = tasks.filter(t => open(t) && (t.myDay === yesterday || (nextDue(t) && nextDue(t) <= today)))
+  const picks = tasks.filter(t => open(t) && ((t.myDay === yesterday && !planFinished(t)) || (nextDue(t) && nextDue(t) <= today)))
     .sort((a, b) => a.urgency - b.urgency).slice(0, 6);
   if (!picks.length) { box.innerHTML = ''; box.hidden = true; return; }
   box.hidden = false;
@@ -2468,6 +2765,7 @@ async function copyText(text) {
 }
 function currentListName() {
   if (activeListId === MYDAY_ID) return 'My Day';
+  if (activeListId === PLANNER_ID) return 'Planner';
   return (lists.find(l => l.id === activeListId) || { name: 'Main' }).name;
 }
 function taskAsText(t) {
@@ -2479,7 +2777,7 @@ function taskAsText(t) {
   if (t.type !== 'once') bits.push(intervalLabel(t));
   if ((t.contexts || []).length) bits.push(t.contexts.map(c => '@' + c).join(' '));
   const lines = ['\u2610 ' + t.name + (bits.length ? '  (' + bits.join(', ') + ')' : '')];
-  (t.subtasks || []).forEach(s => lines.push('    ' + (s.done ? '\u2611 ' : '\u2610 ') + s.name));
+  (t.subtasks || []).forEach(s => lines.push('    ' + (s.done ? '\u2611 ' : '\u2610 ') + String(s.name).split('\n').join('\n      ')));
   (t.links || []).forEach(l => lines.push('    ' + (l.kind === 'file' ? 'File: ' : 'Link: ') + l.url));
   return lines.join('\n');
 }
@@ -2491,6 +2789,7 @@ async function copyTasksAsText(list, what) {
   showToast(ok ? 'Copied ' + list.length + ' task' + (list.length === 1 ? '' : 's') + ' as text' : 'Couldn\u2019t reach the clipboard');
 }
 function copyVisible() {
+  if (activeListId === PLANNER_ID) return copyPlanAsText();
   const list = visibleOrder.map(id => tasks.find(t => t.id === id)).filter(Boolean);
   copyTasksAsText(list, currentListName());
 }
@@ -2527,6 +2826,7 @@ function renderBulkBar() {
     <span class="bb-sep"></span>
     <button type="button" class="bb-btn" data-bb="done" ${n ? '' : 'disabled'}>${ico('check')} Complete</button>
     <button type="button" class="bb-btn" data-bb="myday" ${n ? '' : 'disabled'}>${ico('myday')} My Day</button>
+    <button type="button" class="bb-btn" data-bb="plan" data-pop="1" ${n ? '' : 'disabled'}>${ico('calendar')} Plan</button>
     <button type="button" class="bb-btn" data-bb="list" data-pop="1" ${n ? '' : 'disabled'}>Add to list</button>
     <button type="button" class="bb-btn" data-bb="urg" data-pop="1" ${n ? '' : 'disabled'}>Urgency</button>
     <button type="button" class="bb-btn" data-bb="snooze" ${n ? '' : 'disabled'}>+1 day</button>
@@ -2564,6 +2864,7 @@ function bulkAction(act, btn) {
     selectedIds.clear(); render();
     return showToast('Deleted ' + sel.length + ' task' + (sel.length === 1 ? '' : 's'), restore);
   }
+  if (act === 'plan') return openPopMenu(btn, planMenuItems(btn, null, d => { setPlan(sel.map(t => t.id), d); selectedIds.clear(); render(); }));
   if (act === 'urg') {
     return openPopMenu(btn, URGENCY.map(u => ({ label: u.name, onClick: () => { sel.forEach(t => { t.urgency = u.level; }); saveTasks(); render(); } })));
   }
@@ -2573,7 +2874,7 @@ function bulkAction(act, btn) {
       sel.forEach(t => { t.listIds = t.listIds || []; if (!t.listIds.includes(l.id)) t.listIds.push(l.id); });
       saveTasks(); render(); showToast('Added ' + sel.length + ' to ' + l.name);
     } }));
-    if (activeListId !== MAIN_LIST_ID && activeListId !== MYDAY_ID) {
+    if (activeListId !== MAIN_LIST_ID && activeListId !== MYDAY_ID && activeListId !== PLANNER_ID) {
       items.push({ sep: true }, { label: 'Remove from ' + currentListName(), onClick: () => {
         sel.forEach(t => { t.listIds = (t.listIds || []).filter(x => x !== activeListId); }); saveTasks(); render();
       } });
@@ -2921,7 +3222,8 @@ function renderProfiles() {
 function renderLists() {
   const bar = document.getElementById('listsBar');
   const mdCount = tasks.filter(t => inMyDay(t) && !(t.type === 'once' && t.completedAt) && !isDoneToday(t)).length;
-  bar.innerHTML = `<button class="list-tab myday-tab ${activeListId === MYDAY_ID ? 'active' : ''}" data-list="${MYDAY_ID}" title="Tasks you've picked for today">${ico('myday')} My Day<span class="lt-count">${mdCount}</span></button>` + lists.map(l => {
+  const plCount = tasks.filter(t => t.myDay && t.myDay > todayStr() && !(t.type === 'once' && t.completedAt)).length;
+  bar.innerHTML = `<button class="list-tab myday-tab ${activeListId === MYDAY_ID ? 'active' : ''}" data-list="${MYDAY_ID}" title="Tasks you've picked for today">${ico('myday')} My Day<span class="lt-count">${mdCount}</span></button>` + `<button class="list-tab planner-tab ${activeListId === PLANNER_ID ? 'active' : ''}" data-list="${PLANNER_ID}" title="Plan your days ahead: tasks appear in My Day on their day">${ico('calendar')} Planner${plCount ? `<span class="lt-count">${plCount}</span>` : ''}</button>` + lists.map(l => {
     const active = l.id === activeListId;
     if (active && listRenaming) {
       return `<input class="list-rename-input" id="listRenameInput" value="${escapeHTML(l.name)}" maxlength="28">`;
@@ -2996,6 +3298,7 @@ function renderLists() {
 /* ---------- render: main ---------- */
 function render() {
   closeShareMenu();
+  { const ct = document.getElementById('carryToggle'); if (ct) ct.checked = carryOver; }
   const countsEl = document.getElementById('counts');
   const filtersEl = document.getElementById('filters');
   const root = document.getElementById('queueRoot');
@@ -3006,14 +3309,14 @@ function render() {
   [...editingIds].forEach(id => { if (!expandedIds.has(id)) editingIds.delete(id); });
 
   renderLists();
-  const listTasks = activeListId === MAIN_LIST_ID ? tasks
+  const listTasks = (activeListId === MAIN_LIST_ID || activeListId === PLANNER_ID) ? tasks
     : activeListId === MYDAY_ID ? tasks.filter(inMyDay)
     : tasks.filter(t => (t.listIds || []).includes(activeListId));
   renderMyDaySuggestions();
   selectedIds.forEach(id => { if (!tasks.some(t => t.id === id)) selectedIds.delete(id); });
   renderBulkBar();
 
-  if (listTasks.length === 0) {
+  if (listTasks.length === 0 && activeListId !== PLANNER_ID) {
     countsEl.innerHTML = ''; filtersEl.innerHTML = '';
     root.innerHTML = activeListId === MYDAY_ID
       ? `<div class="empty"><div class="big">${ico('myday')} Plan your day</div>Pick tasks with the ${isWork() ? 'My Day' : '\u2600\uFE0F'} button on any card, or add a new one here. My Day starts fresh every morning.</div>`
@@ -3065,6 +3368,13 @@ function render() {
     || (activeFilter === 'Uncategorized' ? t.contexts.length === 0 : t.contexts.includes(activeFilter)))
     && (!terms.length || terms.every(w => textOf(t).includes(w)));
 
+  if (activeListId === PLANNER_ID) {
+    renderPlanner(active.filter(matches), root);
+    doneSection.style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+    renderArchiveMatches();
+    return;
+  }
   renderQueue(active.filter(matches), root);
   renderDone(done.filter(matches), doneSection);
   renderHistory(listTasks.concat(archiveFor(activeListId)));
@@ -3272,6 +3582,8 @@ function taskHTML(t) {
           <span class="mini-chip"><span class="mc-dot" style="background:${um.color}"></span>${um.name}</span>
           ${subChip}
           ${streakChip}
+          ${t.carriedSince && inMyDay(t) ? `<span class="mini-chip carry-chip" title="Not finished on ${escapeHTML(longDate(t.carriedSince))}; carried over into My Day each day since">\u21AA ${escapeHTML(carriedLabel(t.carriedSince))}</span>` : ''}
+          ${t.myDay && t.myDay > todayStr() ? `<span class="mini-chip plan-chip" title="Planned for My Day on ${escapeHTML(longDate(t.myDay))}">${ico('calendar')} ${escapeHTML(shortPlanDay(t.myDay))}</span>` : ''}
           ${t.shared ? `<span class="mini-chip shared-chip" title="Shared with every profile">${ico('people')} Shared</span>` : ''}
           ${(t.links || []).length ? `<button type="button" class="mini-chip link-chip" data-links-menu="1" data-pop="1" title="Open a link or file">${ico((t.links.length === 1 && t.links[0].kind === 'file') ? 'file' : 'link')} ${t.links.length}</button>` : ''}
           ${ctxChips}
@@ -3280,7 +3592,7 @@ function taskHTML(t) {
       </div>
       ${(t.status === 'overdue' || t.status === 'today') ? `<button type="button" class="snooze-btn" data-snooze="1" title="Snooze to tomorrow">+1 day</button>` : ''}
       ${pill ? `<span class="status-pill ${t.status}" title="${t.status === 'overdue' ? 'Overdue' : t.status === 'today' ? 'Due today' : 'On track'}">${pill}</span>` : ''}
-      <button type="button" class="myday-btn ${inMyDay(t) ? 'on' : ''}" data-myday="1" title="${inMyDay(t) ? 'Remove from My Day' : 'Add to My Day'}" aria-pressed="${inMyDay(t)}">${ico('myday')}</button>
+      <button type="button" class="myday-btn ${inMyDay(t) ? 'on' : ''}" data-myday="1" title="${inMyDay(t) ? 'Remove from My Day' : t.myDay && t.myDay > todayStr() ? 'Move to today (planned for ' + escapeHTML(shortPlanDay(t.myDay)) + ')' : 'Add to My Day'}" aria-pressed="${inMyDay(t)}">${ico('myday')}</button>
       ${profiles.length > 1 ? `<button type="button" class="share-btn" data-share-menu="1" title="Send or share" aria-label="Send or share ${escapeHTML(t.name)}" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg></button>` : ''}
       <button class="expand-btn" title="Details" aria-label="Show details for ${escapeHTML(t.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
     </div>
@@ -3304,6 +3616,14 @@ ${editing ? `
           ${isWeekdayRepeat(t) ? `<div class="picker-row">${weekdayChips(t.weekdays, 'data-edit-day')}</div>` : ''}
         </div>
       </div>
+      <div><span class="field-label">Plan for My Day</span>
+        <div class="due-row">
+          <input type="date" data-edit-plan value="${t.myDay && t.myDay >= todayStr() ? t.myDay : ''}" min="${todayStr()}" aria-label="Plan for My Day on">
+          <button type="button" class="due-clear" data-plan-quick="0">Today</button>
+          <button type="button" class="due-clear" data-plan-quick="1">Tomorrow</button>
+          ${t.myDay ? `<button type="button" class="due-clear" data-plan-clear="1">Clear</button>` : `<span class="due-hint">not planned</span>`}
+        </div>
+      </div>
       <div><span class="field-label">Reminder time</span>
         <div class="due-row">
           <input type="time" data-edit-remind value="${t.remindAt || ''}" aria-label="Reminder time for this task">
@@ -3321,7 +3641,7 @@ ${editing ? `
       </div>
       <div><span class="field-label">Sub-tasks${subs.length ? ` — ${subDone}/${subs.length} done` : ''}</span>
         ${subRows ? `<div class="sub-list">${subRows}</div>` : ''}
-        <div class="sub-add"><input type="text" data-sub-input placeholder="Add a sub-task" maxlength="80"><button data-sub-add title="Add sub-task">+</button></div>
+        <div class="sub-add"><textarea data-sub-input class="step-input" rows="1" placeholder="Add a sub-task (Shift+Enter for a new line)" aria-label="Add a sub-task"></textarea><button data-sub-add title="Add sub-task">+</button></div>
       </div>
       <div><span class="field-label">Contexts — tap to add or remove</span><div class="picker-row">${editCtx || '<span style="color:var(--text-faint);font-size:12.5px;">No contexts yet — add some in Manage contexts.</span>'}</div></div>
       <div><span class="field-label">Lists — tap to add or remove (always in Main)</span><div class="picker-row">${editLists || '<span style="color:var(--text-faint);font-size:12.5px;">No lists yet — create one with “+ New list” up top.</span>'}</div></div>
@@ -3404,20 +3724,26 @@ function wireTask(card) {
   const subInput = card.querySelector('[data-sub-input]');
   const subAddBtn = card.querySelector('[data-sub-add]');
   if (subInput && subAddBtn) {
-    const commitSub = () => {
-      if (!t) return;
-      const v = subInput.value.trim();
-      if (!v) { subInput.focus(); return; }
+    const pushSteps = names => {
+      if (!t || !names.length) return;
       t.subtasks = t.subtasks || [];
-      t.subtasks.push({ id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, done: false });
+      names.forEach(n => t.subtasks.push({ id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: n, done: false }));
       saveTasks(); render();
       requestAnimationFrame(() => {
         const again = document.querySelector(`.task[data-id="${id}"] [data-sub-input]`);
         if (again) again.focus();
       });
     };
+    const commitSub = () => {
+      const v = cleanStepText(subInput.value);
+      if (!v) { subInput.focus(); return; }
+      pushSteps([v]);
+    };
     subAddBtn.addEventListener('click', commitSub);
-    subInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitSub(); } });
+    wireStepBox(subInput, commitSub, text => {
+      const names = (subInput.value.trim() ? [cleanStepText(subInput.value)] : []).concat(String(text).split(/\r?\n/).map(cleanStep).filter(Boolean));
+      pushSteps(names);
+    });
   }
   card.querySelectorAll('[data-toggle-list]').forEach(b => b.addEventListener('click', () => {
     if (!t) return;
@@ -3529,6 +3855,13 @@ function wireTask(card) {
   if (unshareBtn) unshareBtn.addEventListener('click', () => unshareTask(id));
   const menuBtn = card.querySelector('[data-share-menu]');
   if (menuBtn) menuBtn.addEventListener('click', e => { e.stopPropagation(); openShareMenu(id, menuBtn); });
+  const planEdit = card.querySelector('[data-edit-plan]');
+  if (planEdit) planEdit.addEventListener('change', () => { if (t) { t.myDay = planEdit.value || null; delete t.carriedSince; saveTasks(); render(); } });
+  card.querySelectorAll('[data-plan-quick]').forEach(b => b.addEventListener('click', () => {
+    if (t) { t.myDay = addDays(todayStr(), parseInt(b.dataset.planQuick, 10)); delete t.carriedSince; saveTasks(); render(); }
+  }));
+  const planClear = card.querySelector('[data-plan-clear]');
+  if (planClear) planClear.addEventListener('click', () => { if (t) { t.myDay = null; delete t.carriedSince; saveTasks(); render(); } });
   const remindEdit = card.querySelector('[data-edit-remind]');
   const setRemind = v => {
     if (!t) return;
@@ -3637,6 +3970,70 @@ document.getElementById('taskInterval').addEventListener('change', e => {
   if (e.target.value === 'weekdays' && !newTaskWeekdays.size) newTaskWeekdays.add(weekdayOf(todayStr()));
   renderAddWeekdays();
 });
+/* ---------- sub-tasks while adding a task ---------- */
+const newTaskSubtasks = [];
+function cleanStep(line) {
+  // drop list markers people paste in: "- ", "* ", "• ", "1. ", "2) ", "[ ] ", "☐ ", "[x] "
+  return line.replace(/^\s*(?:[-*](?=\s)|[•‣◦▪·]|\d+[.)](?=\s)|\[[ xX]?\]|[☐☑✓✔])\s*/, '').replace(/^\s*(?:\[[ xX]?\]|[☐☑])\s*/, '').trim();
+}
+const LIST_MARKER = /^\s*(?:[-*](?=\s)|[•‣◦▪·]|\d+[.)](?=\s)|\[[ xX]?\]|[☐☑✓✔])/;
+// A pasted bulleted or numbered list becomes separate steps; plain text with
+// line breaks stays together as one multi-line step.
+function looksLikeList(text) {
+  const lines = String(text || '').split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return false;
+  return lines.filter(l => LIST_MARKER.test(l)).length >= Math.ceil(lines.length * 0.6);
+}
+function cleanStepText(text) {
+  // one step, line breaks kept; trailing spaces and blank edge lines dropped
+  return String(text || '').replace(/\r\n/g, '\n').split('\n').map(l => l.replace(/\s+$/, '')).join('\n').replace(/^\n+|\n+$/g, '').trim();
+}
+function growStepBox(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, 240) + 'px'; }
+function wireStepBox(el, onCommit, onList) {
+  el.addEventListener('input', () => growStepBox(el));
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.stopPropagation(); onCommit(); }
+  });
+  el.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (looksLikeList(text)) { e.preventDefault(); onList(text); el.value = ''; growStepBox(el); }
+    else setTimeout(() => growStepBox(el), 0);
+  });
+}
+function renderAddSubtasks() {
+  const list = document.getElementById('addSubList');
+  list.innerHTML = newTaskSubtasks.map((n, i) => `<div class="sub-row"><span class="sub-num">${i + 1}</span><span class="sub-name">${escapeHTML(n)}</span><button type="button" class="sub-x" data-add-sub-del="${i}" title="Remove this step" aria-label="Remove ${escapeHTML(n)}">\u00D7</button></div>`).join('');
+  list.querySelectorAll('[data-add-sub-del]').forEach(b => b.addEventListener('click', () => {
+    newTaskSubtasks.splice(parseInt(b.dataset.addSubDel, 10), 1);
+    renderAddSubtasks();
+    document.getElementById('addSubInput').focus();
+  }));
+  const lbl = document.getElementById('addSubLabel');
+  lbl.textContent = newTaskSubtasks.length ? `Sub-tasks (${newTaskSubtasks.length})` : 'Sub-tasks';
+}
+function addPendingSteps(text) {           // a pasted list: one step per line
+  const steps = String(text || '').split(/\r?\n/).map(cleanStep).filter(Boolean);
+  steps.forEach(n => newTaskSubtasks.push(n));
+  if (steps.length) renderAddSubtasks();
+  return steps.length;
+}
+function addPendingStep(text) {            // what's in the box: one step, line breaks kept
+  const n = cleanStepText(text);
+  if (!n) return 0;
+  newTaskSubtasks.push(n); renderAddSubtasks();
+  return 1;
+}
+(() => {
+  const input = document.getElementById('addSubInput');
+  const commit = () => { if (addPendingStep(input.value)) { input.value = ''; growStepBox(input); } input.focus(); };
+  document.getElementById('addSubBtn').addEventListener('click', commit);
+  // Enter adds the step (never the task); Shift+Enter is a new line inside it
+  wireStepBox(input, commit, text => { if (input.value.trim()) addPendingStep(input.value); addPendingSteps(text); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !input.value && newTaskSubtasks.length) { newTaskSubtasks.pop(); renderAddSubtasks(); }
+  });
+})();
+
 document.getElementById('addBtn').addEventListener('click', () => {
   const nameInput = document.getElementById('taskName');
   const descInput = document.getElementById('taskDesc');
@@ -3647,6 +4044,8 @@ document.getElementById('addBtn').addEventListener('click', () => {
   const isOnce = intervalSel.value === 'once';
   const isDays = intervalSel.value === 'weekdays';
   if (isDays && !newTaskWeekdays.size) newTaskWeekdays.add(weekdayOf(todayStr()));
+  const subInput = document.getElementById('addSubInput');
+  if (subInput.value.trim()) { addPendingStep(subInput.value); subInput.value = ''; growStepBox(subInput); } // a step still in the box counts
   addTask({
     name, type: isOnce ? 'once' : 'recurring',
     intervalDays: isOnce ? null : (isDays ? 7 : parseInt(intervalSel.value, 10)),
@@ -3654,8 +4053,10 @@ document.getElementById('addBtn').addEventListener('click', () => {
     dueDate: dueInput.value || null,
     contexts: [...newTaskContexts],
     description: descInput.value.trim(),
-    urgency: newTaskUrgency
+    urgency: newTaskUrgency,
+    subtasks: [...newTaskSubtasks]
   });
+  newTaskSubtasks.length = 0; renderAddSubtasks();
   nameInput.value = ''; descInput.value = '';
   dueInput.value = '';
   intervalSel.value = 'once';
@@ -4082,10 +4483,23 @@ document.getElementById('profileCurrent').addEventListener('keydown', e => { if 
   const panel = document.getElementById('addPanel'), name = document.getElementById('taskName');
   panel.addEventListener('focusin', () => panel.classList.add('open'));
   panel.addEventListener('focusout', () => setTimeout(() => {
-    if (!panel.contains(document.activeElement) && !name.value.trim() && !document.getElementById('popMenu')) panel.classList.remove('open');
+    if (!panel.contains(document.activeElement) && !name.value.trim() && !newTaskSubtasks.length && !document.getElementById('addSubInput').value.trim() && !document.getElementById('popMenu')) panel.classList.remove('open');
   }, 150));
 })();
 
+document.getElementById('carryToggle').addEventListener('change', e => {
+  carryOver = e.target.checked;
+  saveSettings();
+  if (!carryOver) { showToast('Unfinished tasks will stay in suggestions'); return; }
+  const undo = carryOverUnfinished();
+  render();
+  if (undo.length) {
+    showToast('Moved ' + undo.length + ' unfinished task' + (undo.length === 1 ? '' : 's') + ' into today', () => {
+      undo.forEach(([t, d, c]) => { t.myDay = d; if (c) t.carriedSince = c; else delete t.carriedSince; });
+      saveTasks(); render();
+    });
+  } else showToast('Unfinished tasks will now carry over each day');
+});
 document.getElementById('copyBtn').addEventListener('click', copyVisible);
 document.getElementById('selectBtn').addEventListener('click', () => setSelectMode(!selectMode));
 document.getElementById('templateBtn').addEventListener('click', e => openTemplateMenu(e.currentTarget));
