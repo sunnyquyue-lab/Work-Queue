@@ -65,7 +65,10 @@ Desktop and Start menu, and opens Work Queue.
 every 4 hours, downloads it in the background, then shows **Restart now**. If you
 choose Later, it installs the next time you quit. You can also use **Check now** in
 **Settings** (the ⚙ button, top right) or **Check for updates** in the tray menu.
-The version you're running is shown in Settings too.
+The version you're running is shown next to the title (click it to open the update
+controls), and the first time Work Queue opens after an update, a note at the top says
+which version it updated to. Every release shows its own number automatically: it's
+the number you type when you run the workflow.
 
 **Publishing a new version** (for example, when you get updated files):
 
@@ -111,6 +114,9 @@ Your data stays. To remove it too, delete the `%AppData%\WorkQueue` folder.
   in My Day on its day, by itself. Missed plans and later plans are listed too, and
   the arrows move between weeks. You can also set "Plan for My Day" in a task's
   editor, or plan several selected tasks at once.
+- **Adding while a context is selected:** pick a context chip (for example @Calls) and
+  new tasks get that context automatically, so they stay in view. The add box says
+  "Add a task to @Calls"; untick it in the form for any task that shouldn't have it.
 - **Select several:** click **Select**, or Ctrl-click or Shift-click tasks, then
   complete, add to My Day, add to a list, change urgency, snooze, copy or delete them
   together. Press Esc when you're done.

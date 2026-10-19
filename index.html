@@ -947,6 +947,18 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
   .link-open:hover span { text-decoration: underline; }
   [data-link-input].bad { border-color: var(--red-strong) !important; }
   .task.drop-file { box-shadow: 0 0 0 2px var(--primary), var(--shadow-md); }
+  .ver-badge {
+    display: inline-flex; align-items: center; vertical-align: middle; margin-left: 6px; padding: 2px 8px;
+    border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-dim);
+    font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0; line-height: 1.4; cursor: pointer;
+    position: relative; top: -3px;
+  }
+  .ver-badge[hidden] { display: none; }
+  .ver-badge:hover { border-color: var(--primary); color: var(--text); }
+  html.work .ver-badge { border-width: 1px; border-radius: 4px; font-size: 11.5px; font-weight: 600; top: -2px; }
+  .updated-note { border-color: var(--teal); }
+  .updated-note .ub-from { color: var(--text-faint); font-weight: 600; }
+  html.work .updated-note .ub-from { font-weight: 400; }
   .app-version { text-align: center; margin: 6px 0 0; font-size: 12px; color: var(--text-faint); font-weight: 600; }
   .update-banner {
     display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 16px; padding: 10px 14px;
@@ -1200,7 +1212,7 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
   <header class="app-head">
     <div class="brand">
       <div class="eyebrow">Today's lineup</div>
-      <h1>Work Queue</h1>
+      <h1>Work Queue <button type="button" class="ver-badge" id="verBadge" hidden title="Version details and updates"></button></h1>
       <svg class="squiggle" viewBox="0 0 208 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8 Q16 1 29 8 T55 8 T81 8 T107 8 T133 8 T159 8 T185 8 T205 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>
     </div>
     <div class="head-right" id="headRight">
@@ -1370,6 +1382,7 @@ try { var wqT = localStorage.getItem('wq-theme') || 'system';
    Fun uses emoji; Work swaps every emoji for a line icon drawn in the Office
    style. Templates call ico(name) so both looks render from the same code. */
 const STYLE_KEY = 'work-queue-style';
+const LAST_VERSION_KEY = 'work-queue-last-version';   // the version Work Queue last opened as
 const ICON_EMOJI = { bell: '\u{1F514}', people: '\u{1F465}', streak: '\u{1F525}', download: '\u2B07', upload: '\u2B06',
   link: '\u{1F517}', folder: '\u{1F5C2}\uFE0F', restore: '\u21BA', pin: '\u{1F4CC}', widget: '\u{1FA9F}', glue: '\u{1F5BC}\uFE0F',
   up: '\u2B06\uFE0F', down: '\u2B07\uFE0F', system: '\u{1F5A5}\uFE0F', sun: '\u2600\uFE0F', moon: '\u{1F319}', done: '\u{1F389}',
@@ -1551,6 +1564,30 @@ let managerOpen = false;
 const expandedIds = new Set();
 const editingIds = new Set(); // open tasks showing the editor instead of the read-only summary
 const newTaskContexts = new Set();
+/* While a context filter is on, new tasks get that context automatically, so
+   they don't vanish from the filtered view. Only a context added this way is
+   taken off again when the filter changes; one you picked yourself stays. */
+let autoFilterCtx = null;          // the context ticked automatically from the filter
+let dismissedFilterCtx = null;     // the user unticked it while that filter was on
+let lastFilterCtx = null;
+function filterContext() {
+  return (activeFilter && activeFilter !== 'All' && activeFilter !== 'Uncategorized') ? activeFilter : null;
+}
+function syncFilterContext(override) {
+  const fc = override === undefined ? filterContext() : override;
+  if (fc !== lastFilterCtx) { dismissedFilterCtx = null; lastFilterCtx = fc; }
+  let changed = false;
+  if (autoFilterCtx && autoFilterCtx !== fc) {
+    if (newTaskContexts.delete(autoFilterCtx)) changed = true;
+    autoFilterCtx = null;
+  }
+  if (fc && fc !== dismissedFilterCtx && !newTaskContexts.has(fc)) {
+    newTaskContexts.add(fc); autoFilterCtx = fc; changed = true;
+  }
+  if (changed && typeof renderAddContexts === 'function' && document.getElementById('addContexts')) renderAddContexts();
+  const name = document.getElementById('taskName');
+  if (name) name.placeholder = (fc && newTaskContexts.has(fc)) ? 'Add a task to @' + fc : 'Add a task';
+}
 let newTaskUrgency = 3;
 let pendingDeleteCtx = null;
 let draggedTaskId = null;
@@ -2620,7 +2657,7 @@ function renderPlanner(active, root) {
     if (e.key !== 'Enter' || !inp.value.trim()) return;
     e.preventDefault();
     const day = inp.dataset.plNew;
-    addTask({ name: inp.value.trim(), type: 'once', intervalDays: null, weekdays: null, dueDate: null, contexts: [], description: '', urgency: 3, subtasks: [] });
+    addTask({ name: inp.value.trim(), type: 'once', intervalDays: null, weekdays: null, dueDate: null, contexts: filterContext() ? [filterContext()] : [], description: '', urgency: 3, subtasks: [] });
     tasks[tasks.length - 1].myDay = day;
     saveTasks(); render();
     const again = document.querySelector(`[data-pl-new="${day}"]`); if (again) again.focus();
@@ -2900,7 +2937,7 @@ function saveAsTemplate(t) {
 function addFromTemplate(tpl) {
   const rid = p => p + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
   addTask({ name: tpl.name, type: tpl.type || 'once', intervalDays: tpl.intervalDays, weekdays: tpl.weekdays,
-            dueDate: null, contexts: tpl.contexts, description: tpl.description, urgency: tpl.urgency });
+            dueDate: null, contexts: [...new Set([...(tpl.contexts || []), ...(filterContext() ? [filterContext()] : [])])], description: tpl.description, urgency: tpl.urgency });
   const t = tasks[tasks.length - 1];
   t.subtasks = (tpl.subtasks || []).map(n => ({ id: rid('sub_'), name: n, done: false }));
   t.links = (tpl.links || []).map(l => ({ id: rid('lnk_'), url: l.url, title: l.title, kind: l.kind }));
@@ -3093,8 +3130,15 @@ function renderAddContexts() {
   wrap.querySelectorAll('.pick-chip[data-ctx]').forEach(btn => {
     btn.addEventListener('click', () => {
       const c = btn.dataset.ctx;
-      if (newTaskContexts.has(c)) { newTaskContexts.delete(c); btn.classList.remove('selected'); }
-      else { newTaskContexts.add(c); btn.classList.add('selected'); }
+      if (newTaskContexts.has(c)) {
+        newTaskContexts.delete(c); btn.classList.remove('selected');
+        if (c === filterContext()) dismissedFilterCtx = c;
+        if (c === autoFilterCtx) autoFilterCtx = null;
+      } else {
+        newTaskContexts.add(c); btn.classList.add('selected');
+        if (c === dismissedFilterCtx) dismissedFilterCtx = null;
+      }
+      syncFilterContext();
     });
   });
   document.getElementById('pickNewBtn').addEventListener('click', openInlineNewContext);
@@ -3318,6 +3362,7 @@ function render() {
 
   if (listTasks.length === 0 && activeListId !== PLANNER_ID) {
     countsEl.innerHTML = ''; filtersEl.innerHTML = '';
+    syncFilterContext(null);
     root.innerHTML = activeListId === MYDAY_ID
       ? `<div class="empty"><div class="big">${ico('myday')} Plan your day</div>Pick tasks with the ${isWork() ? 'My Day' : '\u2600\uFE0F'} button on any card, or add a new one here. My Day starts fresh every morning.</div>`
       : activeListId === MAIN_LIST_ID
@@ -3360,6 +3405,7 @@ function render() {
   if (hasUncat) chips.push(`<button class="filter-chip ${activeFilter==='Uncategorized'?'active':''}" data-f="Uncategorized">Uncategorized</button>`);
   filtersEl.innerHTML = chips.join('');
   filtersEl.querySelectorAll('.filter-chip').forEach(b => b.addEventListener('click', () => { activeFilter = b.dataset.f; render(); }));
+  syncFilterContext();
 
   const terms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const textOf = t => [t.name, t.description, ...(t.contexts || []), ...(t.subtasks || []).map(s => s.name), ...(t.links || []).map(l => linkTitle(l) + ' ' + l.url)]
@@ -4062,7 +4108,9 @@ document.getElementById('addBtn').addEventListener('click', () => {
   intervalSel.value = 'once';
   newTaskWeekdays.clear(); renderAddWeekdays();
   newTaskContexts.clear(); newTaskUrgency = 3;
+  autoFilterCtx = null; dismissedFilterCtx = null;
   renderAddContexts(); renderAddUrgency();
+  syncFilterContext();
   nameInput.focus();
 });
 document.getElementById('taskName').addEventListener('keydown', e => {
@@ -4571,6 +4619,39 @@ document.addEventListener('click', e => {
   }
 });
 
+/* ---------- version: badge by the title, and a note after each update ----------
+   The version comes from the installed app itself (the number typed into the
+   GitHub workflow), so every update shows its own number with no extra step. */
+async function showVersion(info) {
+  const v = info && info.version;
+  if (!v) return;
+  const label = info.packaged ? 'v' + v : 'dev';
+  const badge = document.getElementById('verBadge');
+  if (badge) {
+    badge.textContent = label; badge.hidden = false;
+    badge.title = 'Work Queue ' + v + (info.packaged ? '' : ' (development copy)') + ' \u2014 click for updates';
+    if (!badge.dataset.wired) { badge.dataset.wired = '1'; badge.addEventListener('click', () => openSettings()); }
+  }
+  document.title = 'Work Queue ' + v;
+  if (!info.packaged) return;
+  let lastSeen = null;
+  try { lastSeen = await store.get(LAST_VERSION_KEY); } catch (e) {}
+  if (lastSeen === v) return;
+  try { await store.set(LAST_VERSION_KEY, v); } catch (e) {}
+  if (!lastSeen) {
+    // No version recorded: either a fresh install, or the first update since this
+    // feature arrived. Existing tasks mean it's an update worth announcing.
+    for (let i = 0; i < 100 && !loaded; i++) await new Promise(r => setTimeout(r, 50));
+    if (!tasks.length && !archive.length) return;           // a fresh install: nothing to announce
+  }
+  const note = document.createElement('div');
+  note.className = 'update-banner updated-note'; note.id = 'updatedNote'; note.setAttribute('role', 'status');
+  note.innerHTML = `<span class="ub-text">${ico('done')} Updated to <b>Work Queue ${escapeHTML(v)}</b>${lastSeen ? `<span class="ub-from"> (from ${escapeHTML(lastSeen)})</span>` : ''}</span><button type="button" class="ghost-btn" id="updatedOk">OK</button>`;
+  const anchor = document.getElementById('listsBar');
+  if (anchor) anchor.insertAdjacentElement('beforebegin', note);
+  document.getElementById('updatedOk').addEventListener('click', () => note.remove());
+}
+
 /* ---------- desktop app controls ----------
    Everything below only runs inside the desktop app, where preload.js provides
    window.workqueue. In a browser these blocks do nothing. */
@@ -4707,7 +4788,10 @@ if (window.workqueue) {
       }
     };
     let last = {};
-    window.workqueue.appInfo().then(i => { info = i || info; paint(last); });
+    window.workqueue.appInfo().then(async i => {
+      info = i || info; paint(last);
+      showVersion(info);
+    });
     window.workqueue.getUpdateState().then(s => { last = s || {}; paint(last); });
     window.workqueue.onUpdateState(s => { last = s || {}; paint(last); });
     document.addEventListener('wq:style', () => paint(last));
