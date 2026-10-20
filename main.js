@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, dialog, shell, screen, globalShortcut, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, dialog, shell, screen, globalShortcut, Notification, powerMonitor } = require('electron');
 // Automatic updates (installed app only). Loaded defensively so a development
 // copy without the dependency still runs.
 let autoUpdater = null;
@@ -106,7 +106,7 @@ function setupAutoUpdates() {
   autoUpdater.on('update-downloaded', i => {
     sendUpdate({ status: 'ready', version: i && i.version });
     try {
-      const n = new Notification({ title: 'Work Queue ' + (i && i.version) + ' is ready', body: 'Restart Work Queue to finish updating. It will also install the next time you quit.' });
+      const n = new Notification({ title: 'Work Queue ' + (i && i.version) + ' is ready', body: 'It installs by itself while Work Queue is in the tray, or choose Restart now.' });
       n.on('click', () => { if (win) { win.show(); win.focus(); } });
       n.show();
     } catch (e) {}
@@ -114,21 +114,70 @@ function setupAutoUpdates() {
   autoUpdater.on('error', e => {
     const msg = String((e && e.message) || e || '');
     // a copy built without release info (e.g. npm run dist) can't auto-update
-    sendUpdate(/app-update\.yml|ENOENT/i.test(msg) ? { status: 'unavailable' } : { status: 'error', message: msg.slice(0, 200) });
+    if (/app-update\.yml|ENOENT/i.test(msg)) return sendUpdate({ status: 'unavailable' });
+    // GitHub answers "not found" for a private repository (or one with no releases yet)
+    if (/\b404\b|not found|Cannot find (latest|channel)|No published versions/i.test(msg)) return sendUpdate({ status: 'error', reason: 'not-found', message: msg.slice(0, 200), checkedAt: Date.now() });
+    if (/ENOTFOUND|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|net::ERR_/i.test(msg)) return sendUpdate({ status: 'error', reason: 'offline', message: msg.slice(0, 200), checkedAt: Date.now() });
+    sendUpdate({ status: 'error', message: msg.slice(0, 200), checkedAt: Date.now() });
   });
   setTimeout(checkForUpdatesNow, 8000);
-  setInterval(checkForUpdatesNow, 4 * 60 * 60 * 1000);
+  setInterval(checkForUpdatesNow, 60 * 60 * 1000);          // every hour
+  setInterval(maybeQuietInstall, 60 * 1000);                // install a downloaded update when it won't interrupt
+}
+let lastCheckAt = 0;
+function checkIfStale() { if (Date.now() - lastCheckAt > 30 * 60 * 1000) checkForUpdatesNow(); }
+
+/* ---- installing without being asked ----
+   A downloaded update installs by itself, silently, when Work Queue isn't in
+   use: after it has been hidden in the tray (or minimised) for 2 minutes, or
+   when the PC has been idle for 20 minutes. Work in progress is saved first,
+   and the updated app reopens the way it was (quietly in the tray if hidden). */
+const QUIET_FLAG = () => path.join(app.getPath('userData'), 'updated-quietly.json');
+let hiddenSince = null;
+function windowInUse() { return !!(win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()); }
+function maybeQuietInstall() {
+  if (!autoUpdater || updateState.status !== 'ready') { hiddenSince = null; return; }
+  if (windowInUse()) hiddenSince = null; else if (!hiddenSince) hiddenSince = Date.now();
+  let idleSecs = 0;
+  try { idleSecs = powerMonitor.getSystemIdleTime(); } catch (e) {}
+  const hiddenLongEnough = hiddenSince && Date.now() - hiddenSince >= 2 * 60 * 1000;
+  if (hiddenLongEnough || idleSecs >= 20 * 60) installUpdateNow(true);
 }
 function checkForUpdatesNow() {
   if (!autoUpdater || !app.isPackaged) return;
   if (updateState.status === 'downloading' || updateState.status === 'ready') return;
+  lastCheckAt = Date.now();
   try { autoUpdater.checkForUpdates().catch(() => {}); } catch (e) {}
 }
-function installUpdateNow() {
-  if (!autoUpdater || updateState.status !== 'ready') return;
-  quitting = true;
-  try { globalShortcut.unregisterAll(); } catch (e) {}
-  autoUpdater.quitAndInstall(false, true); // install, then reopen Work Queue
+let installing = false;
+function installUpdateNow(quiet) {
+  if (!autoUpdater || updateState.status !== 'ready' || installing) return;
+  installing = true;
+  const reopenHidden = !windowInUse();
+  try { fs.writeFileSync(QUIET_FLAG(), JSON.stringify({ version: updateState.version, hidden: !!(quiet && reopenHidden), at: Date.now() })); } catch (e) {}
+  // let the page save anything being typed, then install and reopen
+  try { if (win && !win.isDestroyed()) win.webContents.send('flush-before-update'); } catch (e) {}
+  setTimeout(() => {
+    quitting = true;
+    try { globalShortcut.unregisterAll(); } catch (e) {}
+    autoUpdater.quitAndInstall(!!quiet, true);   // quiet: no installer window; always reopen Work Queue
+  }, 900);
+}
+// After an update: reopen hidden if it was hidden, and say so once
+function afterUpdateLaunch() {
+  let info = null;
+  try { info = JSON.parse(fs.readFileSync(QUIET_FLAG(), 'utf8')); fs.unlinkSync(QUIET_FLAG()); } catch (e) { return { hidden: false }; }
+  if (!info || Date.now() - (info.at || 0) > 30 * 60 * 1000) return { hidden: false };   // stale flag: ignore
+  if (info.hidden) {
+    setTimeout(() => {
+      try {
+        const n = new Notification({ title: 'Work Queue updated to ' + app.getVersion(), body: 'It installed while Work Queue was in the tray. Click to open it.' });
+        n.on('click', () => { if (win) { win.show(); win.focus(); } });
+        n.show();
+      } catch (e) {}
+    }, 4000);
+  }
+  return { hidden: !!info.hidden };
 }
 
 function openBackupsFolder() {
@@ -260,6 +309,7 @@ function createWindow(startHidden) {
     if (win !== thisWin) return;
     if (!startHidden) { win.show(); if (mode !== 'desktop') win.focus(); }
   });
+  win.on('show', () => { try { checkIfStale(); } catch (e) {} });   // opening from the tray checks if it's been a while
   win.on('move', saveWindowState);
   win.on('resize', saveWindowState);
   win.on('close', e => {
@@ -411,7 +461,7 @@ ipcMain.handle('set-startup', (_e, enabled) => { setStartup(!!enabled); return s
 ipcMain.handle('app-info', () => ({ version: app.getVersion(), packaged: app.isPackaged }));
 ipcMain.handle('update-state', () => updateState);
 ipcMain.handle('update-check', () => { checkForUpdatesNow(); return updateState; });
-ipcMain.handle('update-install', () => { installUpdateNow(); return true; });
+ipcMain.handle('update-install', () => { installUpdateNow(false); return true; });
 
 // Links and files on tasks. Only web/mail links go to the browser, and only
 // files that exist are opened, with whatever program Windows uses for them.
@@ -498,7 +548,8 @@ if (!gotTheLock) {
     try { globalShortcut.register(HOTKEY, hotkeyToggle); } catch (e) {} // skipped if another app owns it
     // A login launch passes --hidden: start quietly in the tray.
     const launchedAtLogin = process.argv.includes('--hidden');
-    createWindow(launchedAtLogin);
+    const updated = afterUpdateLaunch();
+    createWindow(launchedAtLogin || updated.hidden);
     createTray();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();

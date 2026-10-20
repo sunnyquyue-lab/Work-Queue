@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('workqueue', {
   checkForUpdates: () => ipcRenderer.invoke('update-check'),
   installUpdate: () => ipcRenderer.invoke('update-install'),
   onUpdateState: (cb) => ipcRenderer.on('update-state', (_e, s) => cb(s)),
+  onFlushBeforeUpdate: (cb) => ipcRenderer.on('flush-before-update', () => cb()),
   // links and files on tasks
   openLink: (url) => ipcRenderer.invoke('open-link', url),
   openFile: (p) => ipcRenderer.invoke('open-file', p),
